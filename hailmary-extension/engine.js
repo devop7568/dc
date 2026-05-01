@@ -310,7 +310,15 @@ window.HailMaryEngine = (function () {
     if (a.fmt.includes('short')) return 'Be concise. Lead with the direct answer.';
     if (a.fmt.includes('bullets')) return 'Use bullet points. Each one specific.';
     if (a.fmt.includes('numbered')) return 'Use numbered list, ordered by importance.';
+    if (a.fmt.includes('table')) return 'Use a clear table when comparing options or listing structured facts.';
     if (a.fmt.includes('json')) return 'Output valid JSON only.';
+    if (a.fmt.includes('yaml')) return 'Output valid YAML only.';
+    if (a.fmt.includes('xml')) return 'Output valid XML only.';
+    if (a.fmt.includes('csv')) return 'Output valid CSV only.';
+    if (a.fmt.includes('markdown')) return 'Use clean Markdown with helpful headings.';
+    if (a.fmt.includes('checklist')) return 'Output an actionable checklist with clear completion criteria.';
+    if (a.fmt.includes('rubric') || a.fmt.includes('scorecard')) return 'Output a scoring rubric with criteria, weights, and rating guidance.';
+    if (a.fmt.includes('template') || a.fmt.includes('schema')) return 'Output a reusable template/schema and explain each field briefly.';
     var taskFmt = {
       code: 'Output complete, runnable code with usage example.',
       howto: 'Structure: Prerequisites → Steps → Common Failures → Verification.',
@@ -319,6 +327,20 @@ window.HailMaryEngine = (function () {
       research: 'Structure: Answer → Mechanism → Evidence → Caveats.'
     };
     return taskFmt[a.task] || 'Lead with the direct answer.';
+  }
+
+  function buildStyleDirective(a) {
+    var parts = [buildFormatDirective(a)];
+    var toneMap = {
+      formal: 'Use a formal, professional tone.',
+      casual: 'Use a conversational, natural tone.',
+      humorous: 'Use a witty tone without sacrificing clarity.',
+      simple: 'Use plain language and define jargon.',
+      technical: 'Use precise technical language and avoid hand-waving.'
+    };
+    if (a.tone && toneMap[a.tone]) parts.push(toneMap[a.tone]);
+    if (a.fmt.includes('detailed')) parts.push('Go deep enough to be complete, including caveats and examples.');
+    return 'OUTPUT STYLE:\n• ' + parts.join('\n• ');
   }
 
   // ── HAIL MARY — Autonomous Agent Mode ────────────────────────────────────────
@@ -494,9 +516,11 @@ window.HailMaryEngine = (function () {
 
     var techniqueBlock = buildTechniqueBlock(selectKnowledgeTechniques(a, depth, k, m, live), live);
     var fresh = buildFreshnessProtocol(a);
+    var style = buildStyleDirective(a);
     var quality = buildQualityBar(a, depth);
     if (fresh) result += '\n\n' + fresh;
     if (techniqueBlock) result += '\n\n' + techniqueBlock;
+    result += '\n\n' + style;
     result += '\n\n' + quality;
 
     return result;
@@ -568,7 +592,7 @@ window.HailMaryEngine = (function () {
     if (numTurns === 6) {
       selectedPhases = arcPhases;
     } else if (numTurns === 8) {
-      selectedPhases = ['establish', 'foundation', 'deepen', 'apply', 'problems', 'challenge', 'advanced', 'close'];
+      selectedPhases = ['establish', 'foundation', 'context', 'apply', 'problems', 'challenge', 'advanced', 'close'];
     } else {
       selectedPhases = ['establish', 'foundation', 'context', 'deepen', 'apply', 'problems', 'challenge', 'advanced', 'synthesize', 'close'];
     }

@@ -256,13 +256,13 @@ async function fetchKnowledge() {
   var existing = stored.techniques || [];
   var merged   = mergeTechniques(existing, deduped);
 
-  var newKnowledge = {
+  var newKnowledge = Object.assign({}, stored, {
     techniques:   merged,
     lastFetch:    now,
     fetchCount:   (stored.fetchCount || 0) + 1,
     lastResults:  fetchResults,
     totalFound:   merged.length
-  };
+  });
 
   await new Promise(function(res) {
     chrome.storage.local.set({ hm_knowledge: newKnowledge }, res);
