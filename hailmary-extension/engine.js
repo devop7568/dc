@@ -659,14 +659,25 @@ window.HailMaryEngine = (function () {
         }
       }
       
-      // Problem/challenge turns
-      else if (phase === 'problems' || phase === 'challenge') {
+      // Problem turn
+      else if (phase === 'problems') {
         if (a.task === 'code') {
           turnText = 'What breaks in production? Walk me through failure modes, race conditions, security issues, and edge cases that cause real problems.';
         } else if (a.task === 'research') {
-          turnText = 'Play devil\'s advocate. What is the strongest counterargument? Where might the conventional wisdom be wrong?';
+          turnText = 'What is the evidence base? Where are the gaps in current research? What are the known limitations of these findings?';
         } else {
           turnText = 'What are the failure modes? Where does this approach break down? What are the common mistakes?';
+        }
+      }
+
+      // Challenge turn
+      else if (phase === 'challenge') {
+        if (a.task === 'code') {
+          turnText = 'Play devil\'s advocate on the architecture. What would a senior reviewer push back on? Where are the hidden assumptions that could bite us later?';
+        } else if (a.task === 'research') {
+          turnText = 'Play devil\'s advocate. What is the strongest counterargument? Where might the conventional wisdom be wrong?';
+        } else {
+          turnText = 'Challenge what we have covered so far. What is the strongest case against this approach? What would a skeptic say?';
         }
       }
       
