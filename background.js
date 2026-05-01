@@ -87,6 +87,32 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
     });
     return true;
   }
+
+  // Store captured page context from content script
+  if (msg.type === 'STORE_CONTEXT') {
+    chrome.storage.session.set({ hm_captured_context: msg.context }, function() {
+      if (chrome.runtime.lastError) {
+        // Fallback to local storage if session storage unavailable
+        chrome.storage.local.set({ hm_captured_context: msg.context });
+      }
+    });
+    sendResponse({ ok: true });
+    return true;
+  }
+
+  // Retrieve captured context for popup
+  if (msg.type === 'GET_CONTEXT') {
+    chrome.storage.session.get('hm_captured_context', function(data) {
+      if (chrome.runtime.lastError || !data || !data.hm_captured_context) {
+        chrome.storage.local.get('hm_captured_context', function(data2) {
+          sendResponse({ context: (data2 && data2.hm_captured_context) || null });
+        });
+      } else {
+        sendResponse({ context: data.hm_captured_context });
+      }
+    });
+    return true;
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────

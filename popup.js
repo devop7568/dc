@@ -1,38 +1,40 @@
 /**
- * HailMary Popup Controller v3.0
- * Assumes engine.js is loaded first (window.HailMaryEngine available).
+ * HailMary Popup Controller v8.0
+ * Wires up: injection modes, prompt scoring, templates, context capture,
+ * chain enhancement, A/B compare, history search, and all existing features.
  */
-
 (function () {
   'use strict';
 
-  // ── DEPTH LABELS ──────────────────────────────────────────────────
-  var DEPTH_LABELS = ['LITE', 'STANDARD', 'ENHANCED', 'ULTRA', 'GOD 🔥'];
+  // ── CONSTANTS ──────────────────────────────────────────────────────
+  var DEPTH_LABELS = ['LITE', 'STANDARD', 'ENHANCED', 'ULTRA', 'GOD \uD83D\uDD25'];
   var FIRE_LABELS  = {
-    hailmary: '☄️ FIRE HAIL MARY',
-    manus:    '🧠 RUN MANUS',
-    juma:     '⚡ UNLEASH JUMA',
-    auto:     '🤖 AUTO-ENHANCE',
-    turns:    '🔄 GENERATE TURNS'
+    hailmary: '\u2604\uFE0F FIRE HAIL MARY',
+    manus:    '\uD83E\uDDE0 RUN MANUS',
+    juma:     '\u26A1 UNLEASH JUMA',
+    auto:     '\uD83E\uDD16 AUTO-ENHANCE',
+    turns:    '\uD83D\uDD04 GENERATE TURNS'
   };
 
   // ── STATE ──────────────────────────────────────────────────────────
-  var currentMode  = 'hailmary';
-  var currentTurns = 8;
-  var lastResult   = null;
-  var lastTurns    = null;
-  var MAX_HIST     = 20;
+  var currentMode       = 'hailmary';
+  var currentTurns      = 8;
+  var currentInjectMode = 'direct';
+  var capturedContext    = null;
+  var lastResult        = null;
+  var lastTurns         = null;
+  var MAX_HIST          = 30;
 
   // ── DOM HELPERS ────────────────────────────────────────────────────
   function el(id) { return document.getElementById(id); }
   function show(id) { var e = el(id); if (e) e.style.display = ''; }
   function hide(id) { var e = el(id); if (e) e.style.display = 'none'; }
 
-  // ── INIT ──────────────────────────────────────────────────────────
+  // ── INIT ───────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
 
     if (typeof window.HailMaryEngine === 'undefined') {
-      el('errBox').textContent = '❌ Engine failed to load. Try reloading the extension.';
+      el('errBox').textContent = '\u274C Engine failed to load. Try reloading the extension.';
       show('errBox');
       el('fireBtn').disabled = true;
       return;
@@ -41,29 +43,25 @@
     loadSettings();
     refreshHistory();
     checkTab();
+    renderTemplates('all');
 
-    // Mode tabs
+    // ── Mode tabs ────────────────────────────────────────────────────
     document.querySelectorAll('.tab').forEach(function (btn) {
       btn.addEventListener('click', function () {
         document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
         currentMode = btn.dataset.mode;
         if (currentMode === 'turns') {
-          hide('standardPanel');
-          show('turnsPanel');
-          hide('outWrap');
+          hide('standardPanel'); show('turnsPanel'); hide('outWrap');
         } else {
-          show('standardPanel');
-          hide('turnsPanel');
-          hide('turnsOutWrap');
-          el('fireLbl').textContent = (FIRE_LABELS[currentMode] || 'ENHANCE').replace(/^[^\s]+\s/, '');
-          el('fireBtn').querySelector('.fire-ico').textContent = btn.textContent.trim().slice(0, 2);
+          show('standardPanel'); hide('turnsPanel'); hide('turnsOutWrap');
+          updateFireBtn();
         }
         saveSettings();
       });
     });
 
-    // Turns count buttons
+    // ── Turns count ──────────────────────────────────────────────────
     document.querySelectorAll('.turns-count-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         document.querySelectorAll('.turns-count-btn').forEach(function (b) { b.classList.remove('active'); });
@@ -73,19 +71,38 @@
       });
     });
 
-    // Depth slider
+    // ── Depth slider ─────────────────────────────────────────────────
     el('depthSlider').addEventListener('input', function () {
       el('depthLbl').textContent = DEPTH_LABELS[parseInt(this.value, 10) - 1];
       saveSettings();
     });
 
-    // Fire button (standard modes)
-    el('fireBtn').addEventListener('click', handleEnhance);
+    // ── Injection mode buttons ───────────────────────────────────────
+    document.querySelectorAll('.inject-mode-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.inject-mode-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentInjectMode = btn.dataset.inject;
+        saveSettings();
+      });
+    });
 
-    // Turns button
+    // ── Injection strategy tabs in output ────────────────────────────
+    document.querySelectorAll('.inject-tab').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!lastResult || !lastResult.injectionStrategies) return;
+        document.querySelectorAll('.inject-tab').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var strategy = btn.dataset.strategy;
+        showInjectionStrategy(strategy);
+      });
+    });
+
+    // ── Fire button ──────────────────────────────────────────────────
+    el('fireBtn').addEventListener('click', handleEnhance);
     el('turnsBtn').addEventListener('click', handleTurns);
 
-    // Keyboard shortcuts
+    // ── Keyboard shortcuts ───────────────────────────────────────────
     el('rawInput').addEventListener('keydown', function (e) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleEnhance();
     });
@@ -93,30 +110,207 @@
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleTurns();
     });
 
-    // Output buttons (standard)
+    // ── Output buttons ───────────────────────────────────────────────
     el('copyBtn').addEventListener('click', handleCopy);
-    el('injectBtn').addEventListener('click', function () { handleInject(false); });
+    el('injectBtn').addEventListener('click', function () { handleInject(); });
     el('clearBtn').addEventListener('click', handleClear);
+    el('compareBtn').addEventListener('click', toggleCompare);
+    el('rechainBtn').addEventListener('click', handleRechain);
 
-    // Turns output buttons
+    // ── Turns output buttons ─────────────────────────────────────────
     el('turnsCopyAllBtn').addEventListener('click', handleCopyAllTurns);
     el('turnsClearBtn').addEventListener('click', function () {
-      hide('turnsOutWrap');
-      lastTurns = null;
+      hide('turnsOutWrap'); lastTurns = null;
     });
 
-    // History toggle
-    el('histHdr').addEventListener('click', function () {
+    // ── History ──────────────────────────────────────────────────────
+    el('histHdr').addEventListener('click', function (e) {
+      if (e.target.id === 'histSearchToggle' || e.target.id === 'histSearch') return;
       var list = el('histList');
       list.style.display = list.style.display === 'none' ? 'block' : 'none';
     });
+    el('histSearchToggle').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var searchInput = el('histSearch');
+      searchInput.style.display = searchInput.style.display === 'none' ? '' : 'none';
+      if (searchInput.style.display !== 'none') searchInput.focus();
+    });
+    el('histSearch').addEventListener('input', function () {
+      refreshHistory(this.value.trim().toLowerCase());
+    });
+    el('histSearch').addEventListener('click', function (e) { e.stopPropagation(); });
 
-    ['tgInject', 'tgSubmit'].forEach(function (id) {
+    // ── Templates toggle ─────────────────────────────────────────────
+    el('templatesToggle').addEventListener('click', function () {
+      var panel = el('templatesPanel');
+      panel.style.display = panel.style.display === 'none' ? '' : 'none';
+    });
+    document.querySelectorAll('.tpl-cat').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.tpl-cat').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        renderTemplates(btn.dataset.cat);
+      });
+    });
+
+    // ── Prompt scoring ───────────────────────────────────────────────
+    el('scorePrevBtn').addEventListener('click', function () {
+      var raw = el('rawInput').value.trim();
+      if (!raw) { showErr('Type a prompt first to score it.'); return; }
+      var score = window.HailMaryEngine.scorePrompt(raw);
+      renderScore(score);
+      show('scorePanel');
+    });
+
+    // ── Context capture ──────────────────────────────────────────────
+    el('captureCtxBtn').addEventListener('click', handleCaptureContext);
+    el('clearCtxBtn').addEventListener('click', function () {
+      capturedContext = null;
+      hide('capturedCtxBar');
+      toast('Context cleared');
+    });
+
+    // ── Toggle settings persist ──────────────────────────────────────
+    ['tgInject', 'tgSubmit', 'tgChain'].forEach(function (id) {
       el(id).addEventListener('change', saveSettings);
+    });
+
+    // ── Live scoring as user types (debounced) ───────────────────────
+    var scoreTimeout = null;
+    el('rawInput').addEventListener('input', function () {
+      if (scoreTimeout) clearTimeout(scoreTimeout);
+      scoreTimeout = setTimeout(function () {
+        var raw = el('rawInput').value.trim();
+        if (raw.length > 5 && el('scorePanel').style.display !== 'none') {
+          var score = window.HailMaryEngine.scorePrompt(raw);
+          renderScore(score);
+        }
+      }, 500);
     });
   });
 
-  // ── TURNS HANDLER ─────────────────────────────────────────────────
+  // ── TEMPLATES ──────────────────────────────────────────────────────
+  function renderTemplates(category) {
+    var templates = window.HailMaryEngine.getTemplates(category);
+    var list = el('templatesList');
+    list.innerHTML = '';
+    templates.forEach(function (tpl) {
+      var item = document.createElement('div');
+      item.className = 'tpl-item';
+      item.innerHTML = '<span class="tpl-ico">' + tpl.icon + '</span>' +
+        '<span class="tpl-name">' + esc(tpl.name) + '</span>' +
+        '<span class="tpl-cat-tag">' + esc(tpl.category) + '</span>';
+      item.addEventListener('click', function () {
+        el('rawInput').value = tpl.template;
+        el('templatesPanel').style.display = 'none';
+        el('rawInput').focus();
+        toast('\uD83D\uDCDD Template loaded: ' + tpl.name);
+      });
+      list.appendChild(item);
+    });
+  }
+
+  // ── PROMPT SCORE RENDER ────────────────────────────────────────────
+  function renderScore(score) {
+    var gradeEl = el('scoreGrade');
+    gradeEl.textContent = score.grade;
+    gradeEl.className = 'score-grade grade-' + score.grade;
+    el('scoreNum').textContent = score.overall;
+
+    var dims = score.dimensions;
+    var barsHtml = '';
+    var dimNames = { clarity: 'Clarity', specificity: 'Specificity', context: 'Context', structure: 'Structure', actionability: 'Action' };
+    for (var k in dims) {
+      var val = dims[k];
+      var color = val >= 70 ? '#22c55e' : val >= 45 ? '#eab308' : '#ef4444';
+      barsHtml += '<div class="score-bar-row">' +
+        '<span class="score-bar-label">' + (dimNames[k] || k) + '</span>' +
+        '<div class="score-bar-track"><div class="score-bar-fill" style="width:' + val + '%;background:' + color + '"></div></div>' +
+        '<span class="score-bar-val">' + val + '</span></div>';
+    }
+    el('scoreBars').innerHTML = barsHtml;
+
+    var tipsHtml = '';
+    (score.suggestions || []).forEach(function (s) {
+      tipsHtml += '<div class="score-tip">\u26A0\uFE0F ' + esc(s) + '</div>';
+    });
+    el('scoreTips').innerHTML = tipsHtml;
+  }
+
+  // ── CONTEXT CAPTURE ────────────────────────────────────────────────
+  function handleCaptureContext() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (!tabs || !tabs[0]) { toast('\u26A0\uFE0F No active tab'); return; }
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        func: function () {
+          var sel = window.getSelection();
+          if (sel && sel.toString().trim().length > 10) return sel.toString().trim();
+          var main = document.querySelector('main, article, [role="main"], .content, #content');
+          if (main) return main.textContent.trim().slice(0, 2000);
+          return document.body.textContent.trim().slice(0, 1500);
+        }
+      }, function (results) {
+        if (chrome.runtime.lastError || !results || !results[0]) {
+          toast('\u26A0\uFE0F Could not capture page context');
+          return;
+        }
+        var text = results[0].result;
+        if (!text || text.length < 10) {
+          toast('\u26A0\uFE0F No meaningful content found');
+          return;
+        }
+        capturedContext = text;
+        el('capturedCtxLen').textContent = '(' + text.length + ' chars)';
+        show('capturedCtxBar');
+        toast('\uD83C\uDF10 Context captured! (' + text.length + ' chars)');
+      });
+    });
+  }
+
+  // ── INJECTION STRATEGY DISPLAY ─────────────────────────────────────
+  function showInjectionStrategy(strategyKey) {
+    if (!lastResult || !lastResult.injectionStrategies) return;
+    var strategy = lastResult.injectionStrategies[strategyKey];
+    if (!strategy) return;
+
+    if (strategyKey === 'system') {
+      el('outBox').textContent = '=== SYSTEM PROMPT ===\n\n' +
+        strategy.systemPrompt + '\n\n=== USER PROMPT ===\n\n' + strategy.userPrompt;
+    } else {
+      el('outBox').textContent = strategy.content;
+    }
+  }
+
+  // ── A/B COMPARE ────────────────────────────────────────────────────
+  function toggleCompare() {
+    if (!lastResult) return;
+    var panel = el('comparePanel');
+    var outBox = el('outBox');
+    if (panel.style.display === 'none') {
+      el('compareOriginal').textContent = lastResult.original;
+      el('compareEnhanced').textContent = lastResult.enhanced;
+      panel.style.display = '';
+      outBox.style.display = 'none';
+    } else {
+      panel.style.display = 'none';
+      outBox.style.display = '';
+    }
+  }
+
+  // ── RE-CHAIN ───────────────────────────────────────────────────────
+  function handleRechain() {
+    if (!lastResult) return;
+    var depth = parseInt(el('depthSlider').value, 10) || 4;
+    var chained = window.HailMaryEngine.chainEnhance(lastResult.enhanced, depth, lastResult.mode);
+    lastResult.enhanced = chained;
+    lastResult.stats.techniqueCount += 3;
+    lastResult.techniques.push('chainReview');
+    el('outBox').textContent = chained;
+    toast('\uD83D\uDD17 Chain pass applied!');
+  }
+
+  // ── TURNS HANDLER ──────────────────────────────────────────────────
   function handleTurns() {
     hide('errBox');
     var raw = el('turnsInput').value.trim();
@@ -131,7 +325,7 @@
         renderTurns(result);
         show('turnsOutWrap');
         el('turnsOutWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        toast('🔄 ' + result.count + ' turns generated!');
+        toast('\uD83D\uDD04 ' + result.count + ' turns generated!');
         el('turnsBtn').disabled = false;
         el('turnsLbl').textContent = 'GENERATE TURNS';
       }).catch(function (err) {
@@ -142,9 +336,9 @@
     }, 0);
   }
 
-  // ── RENDER TURNS ──────────────────────────────────────────────────
+  // ── RENDER TURNS ───────────────────────────────────────────────────
   function renderTurns(result) {
-    el('turnsOutTitle').textContent = result.count + ' Turns · ' + result.topic.slice(0, 30) + (result.topic.length > 30 ? '…' : '');
+    el('turnsOutTitle').textContent = result.count + ' Turns \u00B7 ' + result.topic.slice(0, 30) + (result.topic.length > 30 ? '\u2026' : '');
     var list = el('turnsList');
     list.innerHTML = '';
 
@@ -157,32 +351,28 @@
       header.innerHTML =
         '<span class="turn-num">Turn ' + turn.number + '</span>' +
         '<span class="turn-phase">' + esc(turn.phase) + '</span>' +
-        '<button class="turn-copy-btn" data-turn="' + turn.number + '">📋</button>';
+        '<button class="turn-copy-btn" data-turn="' + turn.number + '">\uD83D\uDCCB</button>';
 
       var preview = document.createElement('div');
       preview.className = 'turn-preview';
-      preview.textContent = turn.text.slice(0, 90) + '…';
+      preview.textContent = turn.text.slice(0, 90) + '\u2026';
 
       var body = document.createElement('div');
       body.className = 'turn-body';
       body.textContent = turn.text;
 
-      // Toggle expand on header click
       header.addEventListener('click', function (e) {
         if (e.target.classList.contains('turn-copy-btn')) return;
-        var isOpen = body.classList.contains('open');
-        body.classList.toggle('open', !isOpen);
-        preview.style.display = isOpen ? '' : 'none';
+        body.classList.toggle('open');
+        preview.style.display = body.classList.contains('open') ? 'none' : '';
       });
 
-      // Copy individual turn
       header.querySelector('.turn-copy-btn').addEventListener('click', function (e) {
         e.stopPropagation();
         copyText(turn.text);
-        var btn = e.target;
-        btn.textContent = '✅';
-        setTimeout(function () { btn.textContent = '📋'; }, 1500);
-        toast('📋 Turn ' + turn.number + ' copied!');
+        e.target.textContent = '\u2705';
+        setTimeout(function () { e.target.textContent = '\uD83D\uDCCB'; }, 1500);
+        toast('\uD83D\uDCCB Turn ' + turn.number + ' copied!');
       });
 
       item.appendChild(header);
@@ -192,19 +382,19 @@
     });
   }
 
-  // ── COPY ALL TURNS ────────────────────────────────────────────────
+  // ── COPY ALL TURNS ─────────────────────────────────────────────────
   function handleCopyAllTurns() {
     if (!lastTurns) return;
     var all = lastTurns.turns.map(function (t) {
-      return '── TURN ' + t.number + ' (' + t.phase.toUpperCase() + ') ──\n\n' + t.text;
-    }).join('\n\n' + '─'.repeat(50) + '\n\n');
+      return '\u2500\u2500 TURN ' + t.number + ' (' + t.phase.toUpperCase() + ') \u2500\u2500\n\n' + t.text;
+    }).join('\n\n' + '\u2500'.repeat(50) + '\n\n');
     copyText(all);
-    el('turnsCopyAllBtn').textContent = '✅ All';
-    setTimeout(function () { el('turnsCopyAllBtn').textContent = '📋 All'; }, 1500);
-    toast('📋 All ' + lastTurns.count + ' turns copied!');
+    el('turnsCopyAllBtn').textContent = '\u2705 All';
+    setTimeout(function () { el('turnsCopyAllBtn').textContent = '\uD83D\uDCCB All'; }, 1500);
+    toast('\uD83D\uDCCB All ' + lastTurns.count + ' turns copied!');
   }
 
-  // ── CORE: ENHANCE ─────────────────────────────────────────────────
+  // ── CORE: ENHANCE ──────────────────────────────────────────────────
   function handleEnhance() {
     hide('errBox');
     var raw = el('rawInput').value.trim();
@@ -215,9 +405,13 @@
     setTimeout(function () {
       try {
         var depth = parseInt(el('depthSlider').value, 10) || 4;
-        var opts  = { depth: depth };
+        var opts  = {
+          depth: depth,
+          chainPass: el('tgChain').checked,
+          capturedContext: capturedContext
+        };
 
-        window.HailMaryEngine.enhance(raw, currentMode, 'auto', opts).then(function(result) {
+        window.HailMaryEngine.enhance(raw, currentMode, 'auto', opts).then(function (result) {
           lastResult = result;
           renderOutput(result);
           show('outWrap');
@@ -225,17 +419,27 @@
           saveHistory(result);
           refreshHistory();
 
+          // Select the active injection strategy content
+          var activeStrategy = currentInjectMode;
+          document.querySelectorAll('.inject-tab').forEach(function (b) {
+            b.classList.toggle('active', b.dataset.strategy === activeStrategy);
+          });
+          showInjectionStrategy(activeStrategy);
+
+          // Auto-inject
           if (el('tgInject').checked) {
-            injectToTab(result.enhanced, el('tgSubmit').checked).then(function (ok) {
-              if (ok) toast(el('tgSubmit').checked ? '🚀 Injected & Submitted!' : '🚀 Injected!');
-              else    toast('✅ Enhanced! Click 🚀 to inject');
+            var injectContent = getInjectContent(activeStrategy);
+            injectToTab(injectContent, el('tgSubmit').checked).then(function (ok) {
+              if (ok) toast(el('tgSubmit').checked ? '\uD83D\uDE80 Injected & Submitted!' : '\uD83D\uDE80 Injected!');
+              else    toast('\u2705 Enhanced! Click \uD83D\uDE80 to inject');
             });
           } else {
-            var knowledgeNote = result.stats.knowledgeUsed > 0 ? ' · ' + result.stats.knowledgeUsed + ' web techniques' : '';
-            toast('✅ ' + result.stats.powerMultiplier + 'x boost · ' + result.techniques.length + ' techniques' + knowledgeNote);
+            var scoreNote = result.score ? ' \u00B7 Score: ' + result.score.grade : '';
+            var knowledgeNote = result.stats.knowledgeUsed > 0 ? ' \u00B7 ' + result.stats.knowledgeUsed + ' web techniques' : '';
+            toast('\u2705 ' + result.stats.powerMultiplier + 'x boost \u00B7 ' + result.techniques.length + ' techniques' + scoreNote + knowledgeNote);
           }
           setLoading(false);
-        }).catch(function(err) {
+        }).catch(function (err) {
           showErr('Error: ' + err.message);
           setLoading(false);
         });
@@ -246,31 +450,54 @@
     }, 0);
   }
 
-  // ── RENDER OUTPUT ─────────────────────────────────────────────────
+  // ── GET INJECT CONTENT ─────────────────────────────────────────────
+  function getInjectContent(strategyKey) {
+    if (!lastResult || !lastResult.injectionStrategies) return lastResult ? lastResult.enhanced : '';
+    var strategy = lastResult.injectionStrategies[strategyKey];
+    if (!strategy) return lastResult.enhanced;
+    if (strategyKey === 'system') {
+      return strategy.systemPrompt + '\n\n---\n\n' + strategy.userPrompt;
+    }
+    return strategy.content;
+  }
+
+  // ── RENDER OUTPUT ──────────────────────────────────────────────────
   function renderOutput(r) {
     var tags = '';
-    tags += '<span class="tag task">📌 ' + (r.analysis.task || '?') + '</span>';
+    tags += '<span class="tag task">\uD83D\uDCCC ' + (r.analysis.task || '?') + '</span>';
     (r.analysis.domains || []).slice(0, 2).forEach(function (d) {
       tags += '<span class="tag domain">' + d + '</span>';
     });
     var cx = r.analysis.complexity;
     tags += '<span class="tag ' + (cx === 'high' ? 'cplx-h' : cx === 'low' ? 'cplx-l' : 'cplx-m') + '">' + cx + '</span>';
-    if (r.autoRouted) tags += '<span class="tag">auto→' + r.mode + '</span>';
+    if (r.autoRouted) tags += '<span class="tag">auto\u2192' + r.mode + '</span>';
+    if (r.score) tags += '<span class="tag score-tag">' + r.score.grade + ' ' + r.score.overall + '</span>';
     (r.techniques || []).slice(0, 10).forEach(function (t) {
       tags += '<span class="tag">' + t + '</span>';
     });
     el('tagRow').innerHTML = tags;
     el('outBox').textContent = r.enhanced;
-    el('statsBar').textContent = '🔢 ' + r.stats.originalTokens + '→' + r.stats.enhancedTokens + ' tok  ·  ⚡ ' + r.stats.powerMultiplier + 'x  ·  🧱 ' + r.stats.techniqueCount + ' techniques  ·  ⏱ ' + r.stats.duration + 'ms';
+    el('comparePanel').style.display = 'none';
+    el('outBox').style.display = '';
+
+    var statsText = '\uD83D\uDD22 ' + r.stats.originalTokens + '\u2192' + r.stats.enhancedTokens + ' tok';
+    statsText += '  \u00B7  \u26A1 ' + r.stats.powerMultiplier + 'x';
+    statsText += '  \u00B7  \uD83E\uDDF1 ' + r.stats.techniqueCount + ' techniques';
+    statsText += '  \u00B7  \u23F1 ' + r.stats.duration + 'ms';
+    if (r.score) statsText += '  \u00B7  \uD83D\uDCCA ' + r.score.grade + ' (' + r.score.overall + ')';
+    el('statsBar').textContent = statsText;
   }
 
-  // ── COPY ──────────────────────────────────────────────────────────
+  // ── COPY ───────────────────────────────────────────────────────────
   function handleCopy() {
     if (!lastResult) return;
-    copyText(lastResult.enhanced);
-    el('copyBtn').textContent = '✅';
-    setTimeout(function () { el('copyBtn').textContent = '📋'; }, 1500);
-    toast('📋 Copied!');
+    var activeTab = document.querySelector('.inject-tab.active');
+    var strategyKey = activeTab ? activeTab.dataset.strategy : 'direct';
+    var content = getInjectContent(strategyKey);
+    copyText(content);
+    el('copyBtn').textContent = '\u2705';
+    setTimeout(function () { el('copyBtn').textContent = '\uD83D\uDCCB'; }, 1500);
+    toast('\uD83D\uDCCB Copied!');
   }
 
   function copyText(text) {
@@ -292,12 +519,15 @@
     document.body.removeChild(ta);
   }
 
-  // ── INJECT ────────────────────────────────────────────────────────
+  // ── INJECT ─────────────────────────────────────────────────────────
   function handleInject() {
     if (!lastResult) return;
-    injectToTab(lastResult.enhanced, el('tgSubmit').checked).then(function (ok) {
-      if (ok) toast('🚀 Injected' + (el('tgSubmit').checked ? ' & Submitted!' : '!'));
-      else    toast('⚠️ Not on a supported AI page');
+    var activeTab = document.querySelector('.inject-tab.active');
+    var strategyKey = activeTab ? activeTab.dataset.strategy : 'direct';
+    var content = getInjectContent(strategyKey);
+    injectToTab(content, el('tgSubmit').checked).then(function (ok) {
+      if (ok) toast('\uD83D\uDE80 Injected' + (el('tgSubmit').checked ? ' & Submitted!' : '!'));
+      else    toast('\u26A0\uFE0F Not on a supported AI page');
     });
   }
 
@@ -317,18 +547,25 @@
   }
 
   function injectFn(text, autoSubmit) {
-    var selectors = ['#prompt-textarea','.ProseMirror','[contenteditable="true"]',
-      'textarea[placeholder*="message"]','textarea[placeholder*="Ask"]',
-      'textarea[placeholder*="prompt"]','[role="textbox"]','textarea'];
+    var selectors = [
+      '#prompt-textarea', '.ProseMirror', '[contenteditable="true"]',
+      'textarea[placeholder*="message"]', 'textarea[placeholder*="Message"]',
+      'textarea[placeholder*="Ask"]', 'textarea[placeholder*="prompt"]',
+      'textarea[placeholder*="Type"]', '[role="textbox"]',
+      'div[contenteditable][data-placeholder]', 'textarea'
+    ];
     var input = null;
     for (var i = 0; i < selectors.length; i++) {
-      try { var found = document.querySelector(selectors[i]);
+      try {
+        var found = document.querySelector(selectors[i]);
         if (found && found.offsetParent !== null) { input = found; break; }
       } catch (e) {}
     }
     if (!input) return false;
+
     var isEditable = input.getAttribute('contenteditable') === 'true' ||
                      input.classList.contains('ProseMirror') || input.tagName !== 'TEXTAREA';
+
     if (isEditable) {
       input.focus();
       document.execCommand('selectAll', false, null);
@@ -345,40 +582,51 @@
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
     input.focus();
+
     if (autoSubmit) {
       setTimeout(function () {
-        var btnSels = ['[data-testid="send-button"]','button[aria-label="Send message"]',
-          'button[aria-label="Send"]','[data-testid="sendButton"]','.send-button','button[type="submit"]'];
+        var btnSels = [
+          '[data-testid="send-button"]', 'button[aria-label="Send message"]',
+          'button[aria-label="Send"]', '[data-testid="sendButton"]',
+          '.send-button', 'button[type="submit"]',
+          'button[data-testid="send-button"]', '[aria-label="Send prompt"]'
+        ];
         for (var j = 0; j < btnSels.length; j++) {
-          try { var btn = document.querySelector(btnSels[j]);
+          try {
+            var btn = document.querySelector(btnSels[j]);
             if (btn && !btn.disabled) { btn.click(); return; }
           } catch (e) {}
         }
-        input.dispatchEvent(new KeyboardEvent('keydown', { key:'Enter',code:'Enter',keyCode:13,bubbles:true }));
+        input.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true
+        }));
       }, 200);
     }
     return true;
   }
 
-  // ── CLEAR ─────────────────────────────────────────────────────────
+  // ── CLEAR ──────────────────────────────────────────────────────────
   function handleClear() {
     hide('outWrap');
     el('rawInput').value = '';
     el('rawInput').focus();
     lastResult = null;
     hide('errBox');
+    hide('scorePanel');
   }
 
-  // ── SETTINGS ──────────────────────────────────────────────────────
+  // ── SETTINGS ───────────────────────────────────────────────────────
   function saveSettings() {
     try {
       chrome.storage.local.set({
         hm_v3: {
-          mode:    currentMode,
-          depth:   el('depthSlider').value,
-          inject:  el('tgInject').checked,
-          submit:  el('tgSubmit').checked,
-          turns:   currentTurns
+          mode:       currentMode,
+          depth:      el('depthSlider').value,
+          inject:     el('tgInject').checked,
+          submit:     el('tgSubmit').checked,
+          chain:      el('tgChain').checked,
+          turns:      currentTurns,
+          injectMode: currentInjectMode
         }
       });
     } catch (e) {}
@@ -406,441 +654,44 @@
         }
         if (s.inject !== undefined) el('tgInject').checked = s.inject;
         if (s.submit !== undefined) el('tgSubmit').checked = s.submit;
+        if (s.chain !== undefined) el('tgChain').checked = s.chain;
         if (s.turns) {
           currentTurns = s.turns;
           document.querySelectorAll('.turns-count-btn').forEach(function (b) {
             b.classList.toggle('active', parseInt(b.dataset.turns, 10) === s.turns);
           });
         }
+        if (s.injectMode) {
+          currentInjectMode = s.injectMode;
+          document.querySelectorAll('.inject-mode-btn').forEach(function (b) {
+            b.classList.toggle('active', b.dataset.inject === s.injectMode);
+          });
+        }
       });
     } catch (e) {}
   }
 
   function updateFireBtn() {
-    var label = FIRE_LABELS[currentMode] || '⚡ ENHANCE';
+    var label = FIRE_LABELS[currentMode] || '\u26A1 ENHANCE';
     var parts = label.split(' ');
     el('fireBtn').querySelector('.fire-ico').textContent = parts[0];
     el('fireLbl').textContent = parts.slice(1).join(' ');
   }
 
-  // ── HISTORY ──────────────────────────────────────────────────────
-  function saveHistory(result) {
-    try {
-      chrome.storage.local.get('hm_hist', function (data) {
-        var hist = (data && data.hm_hist) || [];
-        hist.unshift({ raw: result.original, enhanced: result.enhanced, mode: result.mode, task: result.analysis.task, ts: new Date().toLocaleTimeString() });
-        if (hist.length > MAX_HIST) hist = hist.slice(0, MAX_HIST);
-        chrome.storage.local.set({ hm_hist: hist });
-      });
-    } catch (e) {}
-  }
-
-  function refreshHistory() {
-    try {
-      chrome.storage.local.get('hm_hist', function (data) {
-        var hist = (data && data.hm_hist) || [];
-        el('histCount').textContent = hist.length;
-        var list = el('histList');
-        list.innerHTML = '';
-        if (hist.length === 0) {
-          list.innerHTML = '<div style="padding:10px;color:#64748b;font-size:11px;text-align:center">No history yet</div>';
-          return;
-        }
-        hist.forEach(function (item) {
-          var div = document.createElement('div');
-          div.className = 'hist-item';
-          div.innerHTML = '<div class="hi-raw">' + esc(item.raw) + '</div>' +
-            '<div class="hi-meta"><span class="hi-mode">' + esc(item.mode || '') + '</span>' +
-            '<span>' + esc(item.task || '') + '</span><span>' + esc(item.ts || '') + '</span></div>';
-          div.addEventListener('click', function () {
-            el('rawInput').value = item.raw;
-            el('outBox').textContent = item.enhanced;
-            show('outWrap');
-            lastResult = { enhanced: item.enhanced, original: item.raw };
-            list.style.display = 'none';
-            toast('📜 Loaded from history');
-          });
-          list.appendChild(div);
-        });
-      });
-    } catch (e) {}
-  }
-
-  // ── TAB STATUS ────────────────────────────────────────────────────
-  function checkTab() {
-    try {
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        if (!tabs || !tabs[0]) return;
-        var url = tabs[0].url || '';
-        var supported = ['chatgpt.com','openai.com','claude.ai','gemini.google','perplexity.ai','poe.com','grok.com','you.com'];
-        var on = supported.some(function (s) { return url.includes(s); });
-        var dot = el('statusDot');
-        dot.classList.toggle('on', on);
-        dot.classList.toggle('warn', !on);
-        dot.title = on ? '✅ Connected — will inject directly' : '⚠️ Not on a supported AI page';
-      });
-    } catch (e) {}
-  }
-
-  // ── UTILS ─────────────────────────────────────────────────────────
-  function setLoading(on) {
-    el('fireBtn').disabled = on;
-    el('fireLbl').textContent = on ? 'ENHANCING...' : (FIRE_LABELS[currentMode] || 'ENHANCE').replace(/^[^\s]+\s/, '');
-  }
-
-  function showErr(msg) {
-    el('errBox').textContent = msg;
-    show('errBox');
-  }
-
-  function toast(msg) {
-    var existing = document.querySelector('.hm-toast');
-    if (existing) existing.remove();
-    var t = document.createElement('div');
-    t.className = 'hm-toast';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2200);
-  }
-
-  function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-}());
-
-(function () {
-  'use strict';
-
-  // ── DEPTH LABELS ──────────────────────────────────────────────────
-  var DEPTH_LABELS = ['LITE', 'STANDARD', 'ENHANCED', 'ULTRA', 'GOD 🔥'];
-  var FIRE_LABELS  = {
-    hailmary: '☄️ FIRE HAIL MARY',
-    manus:    '🧠 RUN MANUS',
-    juma:     '⚡ UNLEASH JUMA',
-    auto:     '🤖 AUTO-ENHANCE'
-  };
-
-  // ── STATE ──────────────────────────────────────────────────────────
-  var currentMode = 'hailmary';
-  var lastResult  = null;
-  var MAX_HIST    = 20;
-
-  // ── DOM HELPERS ────────────────────────────────────────────────────
-  function el(id) { return document.getElementById(id); }
-  function show(id) { el(id).style.display = ''; }
-  function hide(id) { el(id).style.display = 'none'; }
-
-  // ── INIT ──────────────────────────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', function () {
-
-    // Guard: make sure engine loaded
-    if (typeof window.HailMaryEngine === 'undefined') {
-      el('errBox').textContent = '❌ Engine failed to load. Try reloading the extension.';
-      show('errBox');
-      el('fireBtn').disabled = true;
-      return;
-    }
-
-    loadSettings();
-    refreshHistory();
-    checkTab();
-
-    // Mode tabs
-    document.querySelectorAll('.tab').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        currentMode = btn.dataset.mode;
-        el('fireLbl').textContent = (FIRE_LABELS[currentMode] || 'ENHANCE').replace(/^[^\s]+\s/, '');
-        el('fireBtn').querySelector('.fire-ico').textContent = btn.textContent.trim().slice(0, 2);
-        saveSettings();
-      });
-    });
-
-    // Depth slider
-    el('depthSlider').addEventListener('input', function () {
-      el('depthLbl').textContent = DEPTH_LABELS[parseInt(this.value, 10) - 1];
-      saveSettings();
-    });
-
-    // Fire button
-    el('fireBtn').addEventListener('click', handleEnhance);
-
-    // Keyboard shortcut: Ctrl/Cmd+Enter in textarea
-    el('rawInput').addEventListener('keydown', function (e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleEnhance();
-    });
-
-    // Output buttons
-    el('copyBtn').addEventListener('click', handleCopy);
-    el('injectBtn').addEventListener('click', function () { handleInject(false); });
-    el('clearBtn').addEventListener('click', handleClear);
-
-    // History toggle
-    el('histHdr').addEventListener('click', function () {
-      var list = el('histList');
-      list.style.display = list.style.display === 'none' ? 'block' : 'none';
-    });
-
-    // Toggle settings persist
-    ['tgInject', 'tgSubmit'].forEach(function (id) {
-      el(id).addEventListener('change', saveSettings);
-    });
-  });
-
-  // ── CORE: ENHANCE ─────────────────────────────────────────────────
-  function handleEnhance() {
-    hide('errBox');
-    var raw = el('rawInput').value.trim();
-    if (!raw) { showErr('Please type a prompt first.'); el('rawInput').focus(); return; }
-
-    setLoading(true);
-
-    // Use setTimeout(0) so UI updates before the engine runs
-    setTimeout(function () {
-      try {
-        var depth = parseInt(el('depthSlider').value, 10) || 4;
-        var opts  = { depth: depth };
-
-        window.HailMaryEngine.enhance(raw, currentMode, 'auto', opts).then(function(result) {
-          lastResult = result;
-
-          // Render output
-          renderOutput(result);
-          show('outWrap');
-          el('outWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-          // History
-          saveHistory(result);
-          refreshHistory();
-
-          // Auto-inject
-          if (el('tgInject').checked) {
-            injectToTab(result.enhanced, el('tgSubmit').checked).then(function (ok) {
-              if (ok) toast(el('tgSubmit').checked ? '🚀 Injected & Submitted!' : '🚀 Injected!');
-              else    toast('✅ Enhanced! Click 🚀 to inject');
-            });
-          } else {
-            var knowledgeNote = result.stats.knowledgeUsed > 0 ? ' · ' + result.stats.knowledgeUsed + ' web techniques' : '';
-            toast('✅ ' + result.stats.powerMultiplier + 'x boost · ' + result.techniques.length + ' techniques' + knowledgeNote);
-          }
-          setLoading(false);
-        }).catch(function(err) {
-          showErr('Error: ' + err.message);
-          console.error('[HailMary]', err);
-          setLoading(false);
-        });
-      } catch (err) {
-        showErr('Error: ' + err.message);
-        console.error('[HailMary]', err);
-        setLoading(false);
-      }
-    }, 0);
-  }
-
-  // ── RENDER OUTPUT ─────────────────────────────────────────────────
-  function renderOutput(r) {
-    // Tags
-    var tags = '';
-    tags += '<span class="tag task">📌 ' + (r.analysis.task || '?') + '</span>';
-    (r.analysis.domains || []).slice(0, 2).forEach(function (d) {
-      tags += '<span class="tag domain">' + d + '</span>';
-    });
-    var cx = r.analysis.complexity;
-    tags += '<span class="tag ' + (cx === 'high' ? 'cplx-h' : cx === 'low' ? 'cplx-l' : 'cplx-m') + '">' + cx + '</span>';
-    if (r.autoRouted) tags += '<span class="tag">auto→' + r.mode + '</span>';
-    (r.techniques || []).slice(0, 10).forEach(function (t) {
-      tags += '<span class="tag">' + t + '</span>';
-    });
-    el('tagRow').innerHTML = tags;
-
-    // Text
-    el('outBox').textContent = r.enhanced;
-
-    // Stats
-    el('statsBar').textContent = '🔢 ' + r.stats.originalTokens + '→' + r.stats.enhancedTokens + ' tok  ·  ⚡ ' + r.stats.powerMultiplier + 'x  ·  🧱 ' + r.stats.techniqueCount + ' techniques  ·  ⏱ ' + r.stats.duration + 'ms';
-  }
-
-  // ── COPY ──────────────────────────────────────────────────────────
-  function handleCopy() {
-    if (!lastResult) return;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(lastResult.enhanced).then(function () {
-        el('copyBtn').textContent = '✅';
-        setTimeout(function () { el('copyBtn').textContent = '📋'; }, 1500);
-        toast('📋 Copied!');
-      }).catch(function () { fallbackCopy(lastResult.enhanced); });
-    } else {
-      fallbackCopy(lastResult.enhanced);
-    }
-  }
-
-  function fallbackCopy(text) {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    toast('📋 Copied!');
-  }
-
-  // ── INJECT ────────────────────────────────────────────────────────
-  function handleInject() {
-    if (!lastResult) return;
-    injectToTab(lastResult.enhanced, el('tgSubmit').checked).then(function (ok) {
-      if (ok) toast('🚀 Injected' + (el('tgSubmit').checked ? ' & Submitted!' : '!'));
-      else    toast('⚠️ Not on a supported AI page');
-    });
-  }
-
-  function injectToTab(text, autoSubmit) {
-    return new Promise(function (resolve) {
-      chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-        if (!tabs || !tabs[0]) { resolve(false); return; }
-        chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          func: injectFn,
-          args: [text, !!autoSubmit]
-        }, function (results) {
-          resolve(!chrome.runtime.lastError && results && results[0] && results[0].result === true);
-        });
-      });
-    });
-  }
-
-  // This function runs INSIDE the target page
-  function injectFn(text, autoSubmit) {
-    var selectors = [
-      '#prompt-textarea',
-      '.ProseMirror',
-      '[contenteditable="true"]',
-      'textarea[placeholder*="message"]',
-      'textarea[placeholder*="Ask"]',
-      'textarea[placeholder*="prompt"]',
-      '[role="textbox"]',
-      'textarea'
-    ];
-    var input = null;
-    for (var i = 0; i < selectors.length; i++) {
-      try {
-        var found = document.querySelector(selectors[i]);
-        if (found && found.offsetParent !== null) { input = found; break; }
-      } catch (e) {}
-    }
-    if (!input) return false;
-
-    var isEditable = input.getAttribute('contenteditable') === 'true' ||
-                     input.classList.contains('ProseMirror') ||
-                     input.tagName !== 'TEXTAREA';
-
-    if (isEditable) {
-      input.focus();
-      document.execCommand('selectAll', false, null);
-      document.execCommand('insertText', false, text);
-      if (!input.textContent.includes(text.slice(0, 15))) {
-        input.textContent = text;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    } else {
-      var setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
-      if (setter && setter.set) setter.set.call(input, text);
-      else input.value = text;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    input.focus();
-
-    if (autoSubmit) {
-      setTimeout(function () {
-        var btnSels = [
-          '[data-testid="send-button"]',
-          'button[aria-label="Send message"]',
-          'button[aria-label="Send"]',
-          '[data-testid="sendButton"]',
-          '.send-button',
-          'button[type="submit"]'
-        ];
-        for (var j = 0; j < btnSels.length; j++) {
-          try {
-            var btn = document.querySelector(btnSels[j]);
-            if (btn && !btn.disabled) { btn.click(); return; }
-          } catch (e) {}
-        }
-        input.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true
-        }));
-      }, 200);
-    }
-    return true;
-  }
-
-  // ── CLEAR ─────────────────────────────────────────────────────────
-  function handleClear() {
-    hide('outWrap');
-    el('rawInput').value = '';
-    el('rawInput').focus();
-    lastResult = null;
-    hide('errBox');
-  }
-
-  // ── SETTINGS PERSIST ──────────────────────────────────────────────
-  function saveSettings() {
-    try {
-      chrome.storage.local.set({
-        hm_v3: {
-          mode:    currentMode,
-          depth:   el('depthSlider').value,
-          inject:  el('tgInject').checked,
-          submit:  el('tgSubmit').checked
-        }
-      });
-    } catch (e) {}
-  }
-
-  function loadSettings() {
-    try {
-      chrome.storage.local.get('hm_v3', function (data) {
-        var s = data && data.hm_v3;
-        if (!s) return;
-        if (s.mode) {
-          currentMode = s.mode;
-          document.querySelectorAll('.tab').forEach(function (b) {
-            b.classList.toggle('active', b.dataset.mode === s.mode);
-          });
-          updateFireBtn();
-        }
-        if (s.depth) {
-          el('depthSlider').value = s.depth;
-          el('depthLbl').textContent = DEPTH_LABELS[parseInt(s.depth, 10) - 1];
-        }
-        if (s.inject !== undefined) el('tgInject').checked = s.inject;
-        if (s.submit !== undefined) el('tgSubmit').checked = s.submit;
-      });
-    } catch (e) {}
-  }
-
-  function updateFireBtn() {
-    var label = FIRE_LABELS[currentMode] || '⚡ ENHANCE';
-    var parts = label.split(' ');
-    el('fireBtn').querySelector('.fire-ico').textContent = parts[0];
-    el('fireLbl').textContent = parts.slice(1).join(' ');
-  }
-
-  // ── HISTORY ──────────────────────────────────────────────────────
+  // ── HISTORY ────────────────────────────────────────────────────────
   function saveHistory(result) {
     try {
       chrome.storage.local.get('hm_hist', function (data) {
         var hist = (data && data.hm_hist) || [];
         hist.unshift({
-          raw:      result.original,
-          enhanced: result.enhanced,
-          mode:     result.mode,
-          task:     result.analysis.task,
-          ts:       new Date().toLocaleTimeString()
+          raw:         result.original,
+          enhanced:    result.enhanced,
+          mode:        result.mode,
+          task:        result.analysis.task,
+          injectMode:  currentInjectMode,
+          scoreGrade:  result.score ? result.score.grade : null,
+          scoreVal:    result.score ? result.score.overall : null,
+          ts:          new Date().toLocaleTimeString()
         });
         if (hist.length > MAX_HIST) hist = hist.slice(0, MAX_HIST);
         chrome.storage.local.set({ hm_hist: hist });
@@ -848,30 +699,41 @@
     } catch (e) {}
   }
 
-  function refreshHistory() {
+  function refreshHistory(searchFilter) {
     try {
       chrome.storage.local.get('hm_hist', function (data) {
         var hist = (data && data.hm_hist) || [];
+        var filtered = hist;
+        if (searchFilter) {
+          filtered = hist.filter(function (item) {
+            return (item.raw || '').toLowerCase().includes(searchFilter) ||
+                   (item.task || '').toLowerCase().includes(searchFilter) ||
+                   (item.mode || '').toLowerCase().includes(searchFilter);
+          });
+        }
         el('histCount').textContent = hist.length;
         var list = el('histList');
         list.innerHTML = '';
-        if (hist.length === 0) {
-          list.innerHTML = '<div style="padding:10px;color:#64748b;font-size:11px;text-align:center">No history yet</div>';
+        if (filtered.length === 0) {
+          list.innerHTML = '<div style="padding:10px;color:#64748b;font-size:11px;text-align:center">' +
+            (searchFilter ? 'No results for "' + esc(searchFilter) + '"' : 'No history yet') + '</div>';
           return;
         }
-        hist.forEach(function (item) {
+        filtered.forEach(function (item) {
           var div = document.createElement('div');
           div.className = 'hist-item';
+          var scoreHtml = item.scoreGrade ? '<span class="hi-score">' + esc(item.scoreGrade) + '</span>' : '';
           div.innerHTML = '<div class="hi-raw">' + esc(item.raw) + '</div>' +
             '<div class="hi-meta"><span class="hi-mode">' + esc(item.mode || '') + '</span>' +
-            '<span>' + esc(item.task || '') + '</span><span>' + esc(item.ts || '') + '</span></div>';
+            '<span>' + esc(item.task || '') + '</span>' + scoreHtml +
+            '<span>' + esc(item.ts || '') + '</span></div>';
           div.addEventListener('click', function () {
             el('rawInput').value = item.raw;
             el('outBox').textContent = item.enhanced;
             show('outWrap');
-            lastResult = { enhanced: item.enhanced, original: item.raw };
+            lastResult = { enhanced: item.enhanced, original: item.raw, injectionStrategies: null };
             list.style.display = 'none';
-            toast('📜 Loaded from history');
+            toast('\uD83D\uDCDC Loaded from history');
           });
           list.appendChild(div);
         });
@@ -879,23 +741,25 @@
     } catch (e) {}
   }
 
-  // ── TAB STATUS CHECK ─────────────────────────────────────────────
+  // ── TAB STATUS ─────────────────────────────────────────────────────
   function checkTab() {
     try {
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         if (!tabs || !tabs[0]) return;
         var url = tabs[0].url || '';
-        var supported = ['chatgpt.com','openai.com','claude.ai','gemini.google','perplexity.ai','poe.com','grok.com','you.com'];
+        var supported = ['chatgpt.com', 'openai.com', 'claude.ai', 'gemini.google',
+          'perplexity.ai', 'poe.com', 'grok.com', 'you.com', 'deepseek.com',
+          'copilot.microsoft.com', 'chat.mistral.ai', 'labs.google'];
         var on = supported.some(function (s) { return url.includes(s); });
         var dot = el('statusDot');
         dot.classList.toggle('on', on);
         dot.classList.toggle('warn', !on);
-        dot.title = on ? '✅ Connected — will inject directly' : '⚠️ Not on a supported AI page';
+        dot.title = on ? '\u2705 Connected \u2014 will inject directly' : '\u26A0\uFE0F Not on a supported AI page';
       });
     } catch (e) {}
   }
 
-  // ── UTILS ─────────────────────────────────────────────────────────
+  // ── UTILS ──────────────────────────────────────────────────────────
   function setLoading(on) {
     el('fireBtn').disabled = on;
     el('fireLbl').textContent = on ? 'ENHANCING...' : (FIRE_LABELS[currentMode] || 'ENHANCE').replace(/^[^\s]+\s/, '');
@@ -917,7 +781,7 @@
   }
 
   function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
 }());

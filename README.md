@@ -1,76 +1,85 @@
-# HailMary v3.0 — Intelligent Autonomous Prompt Enhancer
+# HailMary v8.0 — Autonomous Prompt Agent
 
-**Real-time learning. Web-sourced techniques. Genuinely gets smarter over time.**
+**Direct/Indirect/Stealth injection. Prompt scoring. Templates. Context capture. Chain enhancement. Adaptive intelligence.**
 
-## What Makes v3.0 Different
+## What's New in v8.0
 
-### 🧠 **Real Intelligence**
-- **Learning Memory**: Tracks which technique combinations work best for different prompt types
-- **Pattern Recognition**: Analyzes prompt signatures (task + domain) and adapts based on past successes
-- **Smart Routing**: Auto mode learns from your usage patterns and routes intelligently
+### 🎯 **5 Injection Modes**
+- **Direct**: Full replacement — paste the enhanced prompt as-is into AI chat
+- **Indirect**: Wraps your original prompt with enhancement layers, keeping your words intact
+- **Stealth**: Subtly improves your prompt without visible scaffolding — looks hand-written
+- **System**: Generates system + user prompt pair (for API/playground use)
+- **Chain**: Sets up a multi-turn conversation with quality ground rules
 
-### 🌐 **Web-Sourced Knowledge**
-The extension automatically fetches prompting techniques from multiple sources:
-- **Academic Papers**: Semantic Scholar API (free, no key needed) — pulls latest research on Chain-of-Thought, ReAct, Tree-of-Thoughts, etc.
-- **Community Prompts**: awesome-chatgpt-prompts, Learn Prompting guides
-- **Prompt Engineering Guides**: DAIR.AI and other curated sources
+### 📊 **Prompt Scoring**
+Real-time scoring on 5 dimensions:
+- **Clarity**: Does the prompt have a clear action verb/ask?
+- **Specificity**: Constraints, examples, concrete details?
+- **Context**: Background info, role, situation?
+- **Structure**: Organization, bullets, sections?
+- **Actionability**: Defined outputs, format, deliverables?
 
-**Auto-refresh**: Fetches new techniques every 6 hours. Stores up to 200 techniques locally.
+Grades from S (masterful) to F (needs work), with improvement suggestions.
 
-### ⚡ **Clean, Copy-Paste Ready Output**
-No more bureaucratic `## EXPERT IDENTITY` headers. The enhanced prompt reads like something a professional prompt engineer wrote by hand — natural, woven, ready to paste directly into ChatGPT/Claude/Gemini.
+### 📝 **Prompt Templates**
+12 ready-to-use templates across categories:
+- Code Review, Debug Assistant, System Design
+- Deep Research, Compare & Decide, ELI5 Expert
+- Strategy Brief, Pro Writer, Email Crafter
+- Brainstorm Mode, Data Analyst
 
-### 🎯 **Smart Enhancement Detection**
-- Detects if your prompt is already well-formed (has context, constraints, format hints)
-- Enhances lightly when appropriate instead of over-engineering
-- Expands vague 3-word prompts into precise, complete requests
+### 🌐 **Context Capture**
+Grab text from the current page and feed it into your prompt enhancement:
+- Captures selected text or main page content
+- Automatically weaves into the enhanced prompt
+- Works across all supported AI platforms
 
-## How It Works
+### 🔗 **Chain Enhancement**
+Double-enhance your prompts with a second pass that:
+- Reviews the enhanced prompt for remaining gaps
+- Adds specificity where still generic
+- Strengthens weak requests into precise directives
+- Applies task-specific hardening (code: error handling, research: sources, creative: sensory detail)
 
-### Architecture
+### ⚖️ **A/B Compare**
+Side-by-side view of original vs enhanced prompt. See exactly what changed and how much value was added.
 
-**background.js** — Knowledge Fetcher & Memory Manager
-- Fetches from Semantic Scholar (academic papers), GitHub (community prompts), prompt engineering guides
-- Parses and extracts technique names, instructions, applicable tasks
-- Stores in `chrome.storage.local` with deduplication
-- Records enhancement history for learning
-
-**engine.js** — Intelligent Enhancement Engine
-- Loads knowledge and memory from background
-- Analyzes prompt: task type, domain, complexity, quality score
-- Selects techniques based on analysis + learned patterns
-- Weaves techniques into natural prose (no labeled sections)
-- Records what worked for future learning
-
-**popup.js** — UI Controller
-- Handles user interaction
-- Calls engine (now async/Promise-based)
-- Displays enhanced prompt with stats
-- Auto-inject to AI tabs
+### 🔍 **History Search**
+Search through past enhancements by prompt text, task type, or mode.
 
 ## Features
 
-### 4 Modes
-- **☄️ Hail Mary**: Balanced fusion — best for strategy, persuasion, general tasks
-- **🧠 Manus**: Systematic, step-by-step — best for code, math, how-to guides
-- **⚡ Juma**: Multi-perspective synthesis — best for research, analysis, creative writing
-- **🤖 Auto**: Learns from your usage and routes intelligently
+### 5 Enhancement Modes
+- **☄️ Hail Mary**: Autonomous reasoning agent — best for strategy, persuasion, general tasks
+- **🧠 Manus**: Orchestration agent with phases — best for code, math, how-to guides
+- **⚡ Juma**: Multi-perspective reasoning — best for research, analysis, creative writing
+- **🤖 Auto**: Intelligent routing based on prompt analysis
+- **🔄 Turns**: Multi-turn conversation scaffolding (6/8/10 turns)
 
 ### 5 Depth Levels
 1. **LITE**: Clean, focused enhancement
 2. **STANDARD**: + examples, constraints
 3. **ENHANCED**: + reasoning methods, depth escalation
-4. **ULTRA**: + self-critique, Socratic decomposition, web-learned techniques
-5. **GOD 🔥**: Full power — contrarian views, iterative refinement, academic techniques
+4. **ULTRA**: + self-critique, web-learned techniques
+5. **GOD 🔥**: Full power — adversarial review, confidence calibration, edge case hunting
 
 ### Auto-Inject & Auto-Submit
-- Detects AI pages (ChatGPT, Claude, Gemini, Perplexity, Poe, Grok, You.com)
-- One-click inject enhanced prompt
+- Detects AI pages (ChatGPT, Claude, Gemini, Perplexity, Poe, Grok, DeepSeek, Copilot, Mistral, You.com)
+- Choose injection mode (Direct/Indirect/Stealth) before or after enhancing
 - Optional auto-submit
 
-### History
-- Stores last 20 enhancements
-- Click to reload from history
+### Supported Platforms
+- ChatGPT / OpenAI
+- Claude (Anthropic)
+- Gemini (Google)
+- Perplexity
+- Poe
+- Grok
+- DeepSeek
+- Copilot (Microsoft)
+- Mistral Chat
+- You.com
+- Google AI Studio
 
 ## Installation
 
@@ -83,84 +92,45 @@ No more bureaucratic `## EXPERT IDENTITY` headers. The enhanced prompt reads lik
 ## Usage
 
 1. Click the HailMary icon in your toolbar
-2. Type your raw prompt
-3. Select mode (or use Auto) and depth
-4. Click **FIRE HAIL MARY**
-5. Copy the enhanced prompt or auto-inject to your AI tab
+2. Type your raw prompt (or use a template)
+3. **Score** your prompt to see improvement suggestions
+4. Select mode, depth, and **injection mode** (Direct/Indirect/Stealth)
+5. Click **FIRE HAIL MARY**
+6. View the enhanced prompt — switch between injection strategies in the output tabs
+7. Copy or auto-inject to your AI tab
 
-## What Gets Learned
+### Context Capture Workflow
+1. Navigate to a page with relevant content
+2. Optionally select specific text
+3. Click **🌐 Capture** in the popup
+4. Write your prompt referencing the captured context
+5. Enhance — the context is woven into the enhanced prompt automatically
 
-The extension tracks:
-- **Prompt Signatures**: task type + domains (e.g., "code:tech", "research:science")
-- **Technique Effectiveness**: which techniques were used for each signature
-- **Usage Patterns**: total enhancements, most common tasks
+### Chain Enhancement
+1. Enhance a prompt normally
+2. Click **🔗** in the output to apply a second enhancement pass
+3. Or enable **Chain Pass** toggle before enhancing for automatic double-pass
 
-This data stays **100% local** in `chrome.storage.local`. Nothing is sent to external servers.
+## Architecture
 
-## Knowledge Sources
+- **engine.js** — Core enhancement engine with prompt scoring, injection strategies, templates, chain enhancement
+- **popup.js** — UI controller with injection mode switching, template rendering, A/B compare
+- **popup.html/css** — Enhanced UI with score panels, injection tabs, template browser
+- **background.js** — Knowledge fetcher, memory manager, context storage relay
+- **content.js** — Floating button with context menu (enhance, capture, score)
 
-### Academic (via Semantic Scholar API)
-- Chain-of-Thought prompting papers
-- Prompt engineering research
-- Reasoning and few-shot learning papers
+## Privacy
 
-### Community
-- awesome-chatgpt-prompts (role-based prompts)
-- Learn Prompting guides
-- DAIR.AI Prompt Engineering Guide
-
-### Refresh Schedule
-- First fetch: 3 seconds after install
-- Auto-refresh: every 6 hours
-- Manual refresh: coming soon in UI
-
-## Technical Details
+All data stays **100% local** in `chrome.storage.local`. Nothing is sent to external servers. Knowledge fetching uses only free, public APIs.
 
 ### Storage Keys
-- `hm_v3`: User settings (mode, depth, toggles)
-- `hm_hist`: Enhancement history (last 20)
+- `hm_v3`: User settings (mode, depth, toggles, injection mode)
+- `hm_hist`: Enhancement history (last 30)
 - `hm_knowledge`: Fetched techniques (up to 200)
 - `hm_memory`: Learning data (prompt signatures, technique scores)
+- `hm_captured_context`: Temporary captured page context
 
-### Permissions
-- `activeTab`, `scripting`: For auto-inject
-- `storage`: For settings, history, knowledge, memory
-- `clipboardWrite`, `clipboardRead`: For copy/paste
-- Host permissions for AI sites (ChatGPT, Claude, etc.)
-
-### Browser Compatibility
+## Browser Compatibility
 - Chrome 88+
 - Edge 88+
 - Any Chromium-based browser with Manifest V3 support
-
-## Version History
-
-### v3.0 (Current)
-- Real-time web knowledge fetching
-- Learning memory system
-- Intelligent auto-routing
-- Clean, natural prompt output (no labeled sections)
-- Smart enhancement detection
-- Async/Promise-based architecture
-
-### v2.1 (Previous)
-- 34 named techniques
-- Manus × Juma fusion
-- Labeled section output
-
-## License
-
-MIT — do whatever you want with it.
-
-## Credits
-
-Built with techniques from:
-- Wei et al. (2022) — Chain-of-Thought
-- Yao et al. (2023) — Tree-of-Thoughts
-- Kojima et al. (2022) — Zero-Shot CoT
-- Bai et al. (2022) — Constitutional AI
-- And many more from the prompt engineering research community
-
----
-
-**HailMary v3.0** — The prompt enhancer that actually gets smarter.

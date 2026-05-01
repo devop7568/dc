@@ -15,10 +15,29 @@
       <span class="logo-ico">☄️</span>
       <div>
         <div class="logo-name">HailMary</div>
-        <div class="logo-sub">Autonomous Prompt Enhancer v3.0</div>
+        <div class="logo-sub">Autonomous Prompt Enhancer v8.0</div>
       </div>
     </div>
-    <div class="status-dot" id="statusDot" title="Checking page..."></div>
+    <div class="hdr-actions">
+      <button id="templatesToggle" class="hdr-btn" title="Prompt Templates">📝</button>
+      <div class="status-dot" id="statusDot" title="Checking page..."></div>
+    </div>
+  </div>
+
+  <!-- TEMPLATES PANEL (hidden by default) -->
+  <div id="templatesPanel" class="templates-panel" style="display:none">
+    <div class="templates-hdr">
+      <span class="lbl">Prompt Templates</span>
+      <div class="template-cats">
+        <button class="tpl-cat active" data-cat="all">All</button>
+        <button class="tpl-cat" data-cat="code">Code</button>
+        <button class="tpl-cat" data-cat="research">Research</button>
+        <button class="tpl-cat" data-cat="strategy">Strategy</button>
+        <button class="tpl-cat" data-cat="creative">Creative</button>
+        <button class="tpl-cat" data-cat="analysis">Analysis</button>
+      </div>
+    </div>
+    <div id="templatesList" class="templates-list"></div>
   </div>
 
   <!-- MODE TABS -->
@@ -33,8 +52,33 @@
   <!-- INPUT (standard modes) -->
   <div id="standardPanel">
   <div class="section">
-    <label class="lbl">Raw Prompt</label>
+    <div class="input-hdr">
+      <label class="lbl">Raw Prompt</label>
+      <div class="input-actions">
+        <button id="captureCtxBtn" class="mini-btn" title="Capture page context">🌐 Capture</button>
+        <button id="scorePrevBtn" class="mini-btn" title="Score this prompt">📊 Score</button>
+      </div>
+    </div>
     <textarea id="rawInput" rows="5" placeholder="Type your raw prompt here. HailMary will analyze it and apply the best prompting techniques automatically..."></textarea>
+
+    <!-- PROMPT SCORE (hidden until scored) -->
+    <div id="scorePanel" class="score-panel" style="display:none">
+      <div class="score-main">
+        <div class="score-grade" id="scoreGrade">-</div>
+        <div class="score-overall">
+          <span id="scoreNum">0</span><span class="score-of">/100</span>
+        </div>
+      </div>
+      <div class="score-bars" id="scoreBars"></div>
+      <div class="score-tips" id="scoreTips"></div>
+    </div>
+
+    <!-- CAPTURED CONTEXT INDICATOR -->
+    <div id="capturedCtxBar" class="captured-ctx-bar" style="display:none">
+      <span>🌐 Page context captured</span>
+      <span id="capturedCtxLen" class="captured-len"></span>
+      <button id="clearCtxBtn" class="mini-btn-x">✕</button>
+    </div>
 
     <label class="lbl mt8">Depth</label>
     <div class="depth-row">
@@ -42,9 +86,20 @@
       <span id="depthLbl" class="depth-lbl">ULTRA</span>
     </div>
 
+    <!-- INJECTION MODE SELECTOR -->
+    <label class="lbl mt8">Injection Mode</label>
+    <div class="inject-mode-row">
+      <button class="inject-mode-btn active" data-inject="direct" title="Replace input entirely">🎯 Direct</button>
+      <button class="inject-mode-btn" data-inject="indirect" title="Wrap your prompt with enhancement layers">🔄 Indirect</button>
+      <button class="inject-mode-btn" data-inject="stealth" title="Subtle improvements that look hand-written">🥷 Stealth</button>
+      <button class="inject-mode-btn" data-inject="system" title="Split into system + user prompts">⚙️ System</button>
+      <button class="inject-mode-btn" data-inject="chain" title="Multi-turn conversation starter">🔗 Chain</button>
+    </div>
+
     <div class="toggles">
       <label class="tog"><input type="checkbox" id="tgInject" checked><span class="tog-track"></span><span>Auto-Inject</span></label>
       <label class="tog"><input type="checkbox" id="tgSubmit"><span class="tog-track"></span><span>Auto-Submit</span></label>
+      <label class="tog"><input type="checkbox" id="tgChain"><span class="tog-track"></span><span>Chain Pass</span></label>
     </div>
   </div>
 
@@ -84,13 +139,39 @@
     <div class="out-hdr">
       <span class="lbl">Enhanced Prompt</span>
       <div class="out-acts">
+        <button id="compareBtn" class="act-btn" title="Compare original vs enhanced">⚖️</button>
         <button id="copyBtn" class="act-btn" title="Copy">📋</button>
         <button id="injectBtn" class="act-btn" title="Inject to AI tab">🚀</button>
+        <button id="rechainBtn" class="act-btn" title="Re-enhance (chain pass)">🔗</button>
         <button id="clearBtn" class="act-btn" title="Clear">✕</button>
       </div>
     </div>
     <div id="tagRow" class="tag-row"></div>
+
+    <!-- INJECTION MODE TABS in output -->
+    <div id="injectTabs" class="inject-tabs">
+      <button class="inject-tab active" data-strategy="direct">🎯 Direct</button>
+      <button class="inject-tab" data-strategy="indirect">🔄 Indirect</button>
+      <button class="inject-tab" data-strategy="stealth">🥷 Stealth</button>
+      <button class="inject-tab" data-strategy="system">⚙️ System</button>
+      <button class="inject-tab" data-strategy="chain">🔗 Chain</button>
+    </div>
+
     <div id="outBox" class="out-box"></div>
+
+    <!-- A/B COMPARE (hidden by default) -->
+    <div id="comparePanel" class="compare-panel" style="display:none">
+      <div class="compare-col">
+        <div class="compare-label">Original</div>
+        <div id="compareOriginal" class="compare-text"></div>
+      </div>
+      <div class="compare-divider"></div>
+      <div class="compare-col">
+        <div class="compare-label compare-label-enh">Enhanced</div>
+        <div id="compareEnhanced" class="compare-text"></div>
+      </div>
+    </div>
+
     <div id="statsBar" class="stats-bar"></div>
   </div>
 
@@ -108,11 +189,16 @@
 
   <!-- HISTORY TOGGLE -->
   <div class="hist-hdr" id="histHdr">
-    <span>📜 History</span><span id="histCount" class="badge">0</span>
+    <span>📜 History</span>
+    <div class="hist-right">
+      <input id="histSearch" class="hist-search" type="text" placeholder="Search..." style="display:none">
+      <button id="histSearchToggle" class="mini-btn-sm" title="Search history">🔍</button>
+      <span id="histCount" class="badge">0</span>
+    </div>
   </div>
   <div id="histList" class="hist-list" style="display:none"></div>
 
-  <div class="footer">HailMary v3.0 — Autonomous Prompt Enhancer · Manus×Juma</div>
+  <div class="footer">HailMary v8.0 — Autonomous Prompt Enhancer · Direct×Indirect×Stealth</div>
 </div>
 <script src="engine.js"></script>
 <script src="popup.js"></script>
