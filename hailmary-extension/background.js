@@ -72,6 +72,8 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
   if (msg.type === 'FETCH_KNOWLEDGE_NOW') {
     fetchKnowledge().then(function(result) {
       sendResponse(result);
+    }).catch(function(e) {
+      sendResponse({ ok: false, error: e.message, techniques: [] });
     });
     return true;
   }
@@ -79,6 +81,8 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
   if (msg.type === 'LIVE_SEARCH_TECHNIQUES') {
     liveSearchTechniques(msg.query, msg.analysis).then(function(result) {
       sendResponse(result);
+    }).catch(function(e) {
+      sendResponse({ ok: false, error: e.message, techniques: [], sources: [] });
     });
     return true;
   }
@@ -783,11 +787,11 @@ async function recordEnhancement(data) {
     // Keep memory lean — max 50 signatures
     var sigs = Object.keys(memory.promptSignatures);
     if (sigs.length > 50) {
-      // Remove least-used signatures
       sigs.sort(function(a, b) {
         return memory.promptSignatures[a].count - memory.promptSignatures[b].count;
       });
-      delete memory.promptSignatures[sigs[0]];
+      var toRemove = sigs[0] === sig ? sigs[1] : sigs[0];
+      if (toRemove) delete memory.promptSignatures[toRemove];
     }
 
     return memory;
