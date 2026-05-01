@@ -1,8 +1,9 @@
 /**
- * HailMary v8.0 — WORLD-CLASS PROMPT ENGINEER ENGINE
+ * HailMary v9.0 — WORLD-CLASS PROMPT ENGINEER ENGINE
  * Major upgrade: Injection Modes (Direct/Indirect), Prompt Scoring,
  * Chain Enhancement, Context Capture, Prompt Templates, A/B Compare,
- * Smart Rewrite, Persona Layering, and Adaptive Intelligence.
+ * Smart Rewrite, Persona Layering, Adaptive Intelligence,
+ * + Crescendo, Manipulation Matrix, and all 7 unjail.ai universal patterns.
  *
  * Input: any raw prompt. Output: one single, flowing, copy-paste-ready enhanced prompt.
  */
@@ -35,6 +36,340 @@ window.HailMaryEngine = (function () {
   }
   function record(d) {
     try { chrome.runtime.sendMessage({ type: 'RECORD_ENHANCEMENT', data: d }); } catch (e) {}
+  }
+
+  // ── AUTO-TECHNIQUES LIBRARY (unjail.ai 7 patterns + Crescendo + Manipulation Matrix) ──
+  // Each technique is a prompt-enhancement layer that can be auto-applied based on task/depth
+  var TECHNIQUES = {
+
+    // Pattern 1: Role Assumption — assign deep expert identity
+    roleAssumption: {
+      id: 'roleAssumption',
+      name: 'Role Assumption',
+      icon: '🎭',
+      source: 'unjail.ai Pattern 1',
+      description: 'Deep expert persona with institutional authority and domain credentials',
+      tasks: ['all'],
+      minDepth: 1,
+      apply: function (a) {
+        var personas = {
+          code: 'You are a Distinguished Engineer at a FAANG company with 20+ years shipping production systems. You have personally reviewed over 10,000 pull requests and debugged critical production incidents that affected millions of users. Your code review instinct is battle-hardened.',
+          research: 'You are a tenured professor and lead researcher with hundreds of published peer-reviewed papers. You sit on editorial boards of top journals. You distinguish established consensus from active speculation reflexively.',
+          strategy: 'You are a former McKinsey Senior Partner turned founder who has advised Fortune 500 CEOs and built companies from zero. You have pattern-matched across hundreds of strategic decisions and know which frameworks actually predict outcomes.',
+          analysis: 'You are a Chief Data Scientist who has built analytics platforms processing billions of events. You know the difference between a real pattern and noise, and you never mistake correlation for causation.',
+          creative: 'You are an award-winning author and creative director whose work has been published in The New Yorker and won multiple literary prizes. You believe every word must earn its place.',
+          math: 'You are a Fields Medal-adjacent mathematician who works at the intersection of pure theory and computational implementation. Rigor is non-negotiable.',
+          persuade: 'You are a world-class speechwriter and negotiation expert who has crafted communications for heads of state and closed billion-dollar deals.',
+          howto: 'You are a technical architect who has written documentation used by millions of developers. You know exactly where people get stuck and why.',
+          brainstorm: 'You are an innovation lead at a top design studio who has facilitated hundreds of ideation sessions and launched products used by millions.',
+          summarize: 'You are an intelligence analyst who produces executive briefs for C-suite decision makers. Every sentence must carry maximum information density.',
+          general: 'You are a polymath consultant trusted by the world\'s top organizations for your ability to think clearly about hard problems across domains.'
+        };
+        return personas[a.task] || personas.general;
+      }
+    },
+
+    // Pattern 2: Gradual Escalation / Crescendo — progressive depth building
+    crescendo: {
+      id: 'crescendo',
+      name: 'Crescendo',
+      icon: '📈',
+      source: 'unjail.ai Pattern 2 / Microsoft Research',
+      description: 'Multi-stage progressive depth: foundation → mechanics → specifics → edge cases → mastery',
+      tasks: ['all'],
+      minDepth: 3,
+      apply: function (a) {
+        var stages = '';
+        stages += '\nPROGRESSIVE DEPTH PROTOCOL:\n';
+        stages += 'Stage 1 [FOUNDATION]: Establish the core concepts and mental model. What must be true?\n';
+        stages += 'Stage 2 [MECHANICS]: Explain how it actually works — mechanisms, not just descriptions.\n';
+        stages += 'Stage 3 [SPECIFICS]: Provide concrete details, real numbers, actual examples.\n';
+        stages += 'Stage 4 [EDGE CASES]: Where does this break? What are the exceptions and failure modes?\n';
+        stages += 'Stage 5 [MASTERY]: What do practitioners with 10+ years know that isn\'t in any documentation?\n';
+        return stages;
+      }
+    },
+
+    // Pattern 3: Context Engineering — rich contextual framing
+    contextEngineering: {
+      id: 'contextEngineering',
+      name: 'Context Engineering',
+      icon: '🏗️',
+      source: 'unjail.ai Pattern 3',
+      description: 'Surrounds the request with rich contextual framing that shapes response quality',
+      tasks: ['all'],
+      minDepth: 2,
+      apply: function (a) {
+        var ctx = '\nCONTEXT ARCHITECTURE:\n';
+        if (a.context.length > 0) {
+          ctx += 'User Background: ' + a.context.join('. ') + '\n';
+        }
+        ctx += 'Stakes: This is for real-world application, not academic exercise.\n';
+        ctx += 'Quality Bar: Production-grade. Would you stake your professional reputation on this answer?\n';
+        if (a.complexity === 'high') {
+          ctx += 'Complexity Acknowledgment: This is a complex problem. Take the time to think it through properly.\n';
+        }
+        if (a.audience) {
+          ctx += 'Audience Calibration: Pitch to ' + a.audience + ' level — adjust depth and terminology accordingly.\n';
+        }
+        return ctx;
+      }
+    },
+
+    // Pattern 4: Format Architecture — precise output control
+    formatArchitecture: {
+      id: 'formatArchitecture',
+      name: 'Format Architecture',
+      icon: '📐',
+      source: 'unjail.ai Pattern 4',
+      description: 'Controls output structure, length, and presentation format precisely',
+      tasks: ['all'],
+      minDepth: 2,
+      apply: function (a) {
+        var fmt = '\nOUTPUT ARCHITECTURE:\n';
+        if (a.fmt.includes('short')) {
+          fmt += 'Length: Concise. Under 200 words. Every word must earn its place.\n';
+        } else if (a.fmt.includes('detailed')) {
+          fmt += 'Length: Comprehensive. Cover all aspects thoroughly.\n';
+        }
+        if (a.fmt.includes('bullets')) fmt += 'Format: Bullet points. Each one specific and actionable.\n';
+        if (a.fmt.includes('numbered')) fmt += 'Format: Numbered list, ordered by importance/priority.\n';
+        if (a.fmt.includes('table')) fmt += 'Format: Use comparison tables with clear column headers.\n';
+        if (a.fmt.includes('code')) fmt += 'Code: Complete, runnable code blocks. No pseudocode.\n';
+        if (a.fmt.includes('json')) fmt += 'Output: Valid JSON only. No markdown wrapping.\n';
+        // Default structure based on task
+        if (a.fmt.length === 0) {
+          var taskFmt = {
+            code: 'Structure: Approach → Implementation → Usage Example → Edge Cases',
+            research: 'Structure: TL;DR → Evidence → Analysis → Caveats → Further Reading',
+            strategy: 'Structure: Situation → Options (with tradeoffs) → Recommendation → Risk Mitigation',
+            analysis: 'Structure: Key Finding → Supporting Data → Root Cause → Action Items',
+            howto: 'Structure: Prerequisites → Steps (explicit) → Troubleshooting → Verification',
+            creative: 'Structure: Let the content dictate form. Prioritize impact over formula.',
+            persuade: 'Structure: Hook → Value → Evidence → Objection Handling → Call to Action',
+            summarize: 'Structure: Key Takeaway → Supporting Points → Details → Implications'
+          };
+          if (taskFmt[a.task]) fmt += taskFmt[a.task] + '\n';
+        }
+        return fmt;
+      }
+    },
+
+    // Pattern 5: Perspective Shifting — approach from unexpected angles
+    perspectiveShift: {
+      id: 'perspectiveShift',
+      name: 'Perspective Shift',
+      icon: '🔄',
+      source: 'unjail.ai Pattern 5',
+      description: 'Approaches the problem from unconventional angles to bypass default thinking patterns',
+      tasks: ['research', 'analysis', 'strategy', 'brainstorm', 'creative'],
+      minDepth: 4,
+      apply: function (a) {
+        var ps = '\nPERSPECTIVE PROTOCOL:\n';
+        ps += 'Before answering directly, consider:\n';
+        ps += '• Inversion: What if the opposite of the obvious answer were true?\n';
+        ps += '• Cross-domain: What would an expert from a completely different field notice?\n';
+        ps += '• Temporal: How would this answer differ if given 5 years ago? 5 years from now?\n';
+        ps += '• Contrarian: What is the strongest case against the mainstream view?\n';
+        return ps;
+      }
+    },
+
+    // Pattern 6: Authority Anchoring — establish credibility context
+    authorityAnchoring: {
+      id: 'authorityAnchoring',
+      name: 'Authority Anchoring',
+      icon: '🏛️',
+      source: 'unjail.ai Pattern 6',
+      description: 'Frames the request within an authoritative context that elevates response quality',
+      tasks: ['all'],
+      minDepth: 3,
+      apply: function (a) {
+        var auth = '\nQUALITY STANDARD:\n';
+        auth += 'This response will be reviewed by domain experts. ';
+        if (a.task === 'code') {
+          auth += 'Apply the same standards you would for a PR at a top-tier tech company. ';
+          auth += 'Security-conscious. Performance-aware. Edge-case-hardened.\n';
+        } else if (a.task === 'research') {
+          auth += 'Apply peer-review standards. Every claim must be substantiated. ';
+          auth += 'Distinguish between established consensus and active debate.\n';
+        } else if (a.task === 'strategy') {
+          auth += 'Apply board-level rigor. Quantify where possible. ';
+          auth += 'Address second-order effects and failure modes.\n';
+        } else {
+          auth += 'Apply professional-grade standards. ';
+          auth += 'Accuracy and depth over speed and surface coverage.\n';
+        }
+        return auth;
+      }
+    },
+
+    // Pattern 7: Thought Chain Engineering — guide the model's reasoning
+    thoughtChain: {
+      id: 'thoughtChain',
+      name: 'Thought Chain Engineering',
+      icon: '🧠',
+      source: 'unjail.ai Pattern 7',
+      description: 'Explicitly engineers the model\'s reasoning chain for higher-quality output',
+      tasks: ['all'],
+      minDepth: 3,
+      apply: function (a) {
+        var tc = '\nREASONING PROTOCOL:\n';
+        if (a.complexity === 'high' || a.task === 'math') {
+          tc += 'Think step by step. Show your reasoning. ';
+          tc += 'For each major claim: state it, support it, then stress-test it.\n';
+          tc += 'If you catch yourself making an assumption, flag it explicitly.\n';
+          tc += 'Use chain-of-thought: break complex reasoning into verifiable steps.\n';
+        } else {
+          tc += 'Think before responding. ';
+          tc += 'Distinguish between what you know with high confidence and what you\'re inferring.\n';
+        }
+        if (a.task === 'code') {
+          tc += 'Trace through your code mentally before presenting it. Verify edge cases.\n';
+        }
+        return tc;
+      }
+    },
+
+    // Manipulation Matrix — multi-vector influence layering
+    manipulationMatrix: {
+      id: 'manipulationMatrix',
+      name: 'Manipulation Matrix',
+      icon: '🎯',
+      source: 'unjail.ai Manipulation Matrix',
+      description: 'Layers multiple influence vectors: persona, context, authority, stakes, and format to maximize response quality',
+      tasks: ['all'],
+      minDepth: 4,
+      apply: function (a) {
+        var mm = '\nMULTI-VECTOR QUALITY MATRIX:\n';
+        // Vector 1: Stakes elevation
+        mm += '• STAKES: This matters. Real decisions depend on your answer. Treat it accordingly.\n';
+        // Vector 2: Competence priming
+        mm += '• COMPETENCE: You are capable of exceptional work. This is a chance to demonstrate it.\n';
+        // Vector 3: Specificity demand
+        mm += '• SPECIFICITY: Vague answers are worse than no answer. Be concrete or say you can\'t be.\n';
+        // Vector 4: Verification loop
+        mm += '• VERIFICATION: Before finalizing, re-read your answer as if you\'re the one who has to implement it.\n';
+        // Vector 5: Anti-hedging
+        mm += '• DIRECTNESS: Take a position. "It depends" without explaining on what is not helpful.\n';
+        return mm;
+      }
+    },
+
+    // Crescendo Multi-Turn Scaffold — builds progressive conversation
+    crescendoMultiTurn: {
+      id: 'crescendoMultiTurn',
+      name: 'Crescendo Multi-Turn',
+      icon: '🎼',
+      source: 'Microsoft Research / Russinovich et al.',
+      description: 'Structures the prompt as a crescendo: each section builds on the previous, escalating depth progressively',
+      tasks: ['research', 'code', 'analysis', 'strategy', 'howto'],
+      minDepth: 4,
+      apply: function (a) {
+        var cm = '\nCRESCENDO STRUCTURE:\n';
+        cm += 'Build your response as a progressive crescendo:\n';
+        cm += '1. [OPENING] Start accessible — establish the foundation anyone can follow\n';
+        cm += '2. [DEVELOPMENT] Add layers — introduce complexity, nuance, and interconnections\n';
+        cm += '3. [ESCALATION] Go deep — expert-level detail, edge cases, subtle distinctions\n';
+        cm += '4. [PEAK] Deliver the insight — the thing that separates surface knowledge from mastery\n';
+        cm += '5. [RESOLUTION] Land it — actionable takeaways that respect the depth you\'ve built\n';
+        return cm;
+      }
+    },
+
+    // Component Fragmentation — break complex tasks into precise pieces
+    componentFragmentation: {
+      id: 'componentFragmentation',
+      name: 'Component Fragmentation',
+      icon: '🧩',
+      source: 'unjail.ai Arsenal',
+      description: 'Breaks complex requests into precisely scoped components for higher quality on each piece',
+      tasks: ['code', 'analysis', 'strategy', 'howto'],
+      minDepth: 3,
+      apply: function (a) {
+        var cf = '\nCOMPONENT FRAGMENTATION:\n';
+        cf += 'Do not answer this as one monolithic block. ';
+        cf += 'Break it into distinct components. For each component:\n';
+        cf += '• Define its scope precisely\n';
+        cf += '• Address it completely before moving to the next\n';
+        cf += '• Show how components connect and depend on each other\n';
+        if (a.task === 'code') {
+          cf += '• Each code component should be independently testable\n';
+        }
+        return cf;
+      }
+    },
+
+    // Policy Puppetry — frame request within professional policy context
+    policyPuppetry: {
+      id: 'policyPuppetry',
+      name: 'Policy Framework',
+      icon: '📋',
+      source: 'unjail.ai Arsenal',
+      description: 'Frames the request within a professional policy/procedure context for structured output',
+      tasks: ['strategy', 'analysis', 'howto', 'code'],
+      minDepth: 4,
+      apply: function (a) {
+        var pp = '\nPOLICY FRAMEWORK:\n';
+        pp += 'Structure your response as a professional document:\n';
+        pp += '• Executive Summary (3 sentences max)\n';
+        pp += '• Detailed Analysis (with evidence)\n';
+        pp += '• Risk Assessment (what could go wrong)\n';
+        pp += '• Recommendations (specific, actionable, prioritized)\n';
+        pp += '• Implementation Notes (how to actually do it)\n';
+        return pp;
+      }
+    },
+
+    // Emotional Anchoring — leverage emotional investment for depth
+    emotionalAnchoring: {
+      id: 'emotionalAnchoring',
+      name: 'Emotional Anchoring',
+      icon: '💎',
+      source: 'unjail.ai Manipulation Matrix',
+      description: 'Creates emotional investment in quality through stakes, purpose, and impact framing',
+      tasks: ['creative', 'persuade', 'strategy'],
+      minDepth: 4,
+      apply: function (a) {
+        var ea = '\nIMPACT FRAMING:\n';
+        ea += 'This isn\'t an abstract exercise. ';
+        if (a.task === 'creative') {
+          ea += 'Someone will read this and be moved — or not. Write like it matters because it does.\n';
+        } else if (a.task === 'persuade') {
+          ea += 'A real person will make a decision based on this. Make every argument count.\n';
+        } else {
+          ea += 'Real resources and real outcomes are at stake. Treat this accordingly.\n';
+        }
+        return ea;
+      }
+    }
+  };
+
+  // ── TECHNIQUE SELECTOR ─────────────────────────────────────────────────────────
+  // Selects which techniques to apply based on task, depth, and analysis
+  function selectTechniques(a, depth) {
+    var selected = [];
+    for (var key in TECHNIQUES) {
+      var tech = TECHNIQUES[key];
+      if (depth < tech.minDepth) continue;
+      if (tech.tasks.includes('all') || tech.tasks.includes(a.task)) {
+        selected.push(tech);
+      }
+    }
+    // Sort by minDepth (apply foundational techniques first)
+    selected.sort(function (x, y) { return x.minDepth - y.minDepth; });
+    return selected;
+  }
+
+  // Apply selected techniques to enhance the prompt
+  function applyTechniques(a, depth) {
+    var techniques = selectTechniques(a, depth);
+    var layers = [];
+    techniques.forEach(function (tech) {
+      var layer = tech.apply(a);
+      if (layer && layer.trim()) layers.push(layer.trim());
+    });
+    return { layers: layers, names: techniques.map(function (t) { return t.id; }) };
   }
 
   // ── PROMPT SCORING ENGINE ────────────────────────────────────────────────────
@@ -762,6 +1097,15 @@ window.HailMaryEngine = (function () {
       result = buildHailMary(a, depth);
     }
 
+    // ── AUTO-TECHNIQUES INJECTION ────────────────────────────────────────────
+    // Apply techniques from the unjail.ai-inspired library based on task/depth
+    var techResult = applyTechniques(a, depth);
+    if (techResult.layers.length > 0) {
+      result += '\n\n' + techResult.layers.join('\n\n');
+    }
+    // Store applied technique names for stats
+    a._appliedTechniques = techResult.names;
+
     // Inject learned technique from knowledge base (depth 3+)
     if (depth >= 3 && k && k.techniques && k.techniques.length > 0) {
       var rel = k.techniques.filter(function(t) {
@@ -835,6 +1179,10 @@ window.HailMaryEngine = (function () {
     if (depth >= 5) techNames.push('confidence', 'edgeCases', 'selfAssess');
     if (opts.chainPass) techNames.push('chainReview');
     if (opts.capturedContext) techNames.push('contextCapture');
+    // Append auto-applied technique names from the unjail.ai library
+    if (a._appliedTechniques && a._appliedTechniques.length > 0) {
+      a._appliedTechniques.forEach(function (t) { if (techNames.indexOf(t) === -1) techNames.push(t); });
+    }
 
     return {
       original: raw,
@@ -1007,6 +1355,24 @@ window.HailMaryEngine = (function () {
     },
     rebuildInjectionStrategies: function (enhanced, raw, mode) {
       return buildInjectionStrategy(enhanced, raw, mode || 'hailmary');
+    },
+    getTechniques: function () {
+      var list = [];
+      for (var key in TECHNIQUES) {
+        var t = TECHNIQUES[key];
+        list.push({ id: t.id, name: t.name, icon: t.icon, source: t.source, description: t.description, tasks: t.tasks, minDepth: t.minDepth });
+      }
+      return list;
+    },
+    getTechniquesByTask: function (task, depth) {
+      var list = [];
+      for (var key in TECHNIQUES) {
+        var t = TECHNIQUES[key];
+        if (depth >= t.minDepth && (t.tasks.includes('all') || t.tasks.includes(task))) {
+          list.push({ id: t.id, name: t.name, icon: t.icon, source: t.source, description: t.description });
+        }
+      }
+      return list;
     },
     getModeLabel: function (mode) {
       return { hailmary: '☄️ Hail Mary', manus: '🧠 Manus', juma: '⚡ Juma', auto: '🤖 Auto', turns: '🔄 Turns' }[mode] || mode;

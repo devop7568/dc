@@ -15,11 +15,12 @@
       <span class="logo-ico">☄️</span>
       <div>
         <div class="logo-name">HailMary</div>
-        <div class="logo-sub">Autonomous Prompt Enhancer v8.0</div>
+        <div class="logo-sub">Autonomous Prompt Enhancer v9.0</div>
       </div>
     </div>
     <div class="hdr-actions">
       <button id="templatesToggle" class="hdr-btn" title="Prompt Templates">📝</button>
+      <button id="techToggle" class="hdr-btn" title="Auto-Techniques">🧬</button>
       <div class="status-dot" id="statusDot" title="Checking page..."></div>
     </div>
   </div>
@@ -147,6 +148,8 @@
       </div>
     </div>
     <div id="tagRow" class="tag-row"></div>
+    <!-- APPLIED TECHNIQUES DISPLAY -->
+    <div id="techRow" class="tech-row" style="display:none"></div>
 
     <!-- INJECTION MODE TABS in output -->
     <div id="injectTabs" class="inject-tabs">
@@ -198,7 +201,17 @@
   </div>
   <div id="histList" class="hist-list" style="display:none"></div>
 
-  <div class="footer">HailMary v8.0 — Autonomous Prompt Enhancer · Direct×Indirect×Stealth</div>
+  <!-- TECHNIQUES PANEL (hidden by default) -->
+  <div id="techPanel" class="tech-panel" style="display:none">
+    <div class="tech-panel-hdr">
+      <span class="lbl">🧬 Auto-Techniques (unjail.ai patterns)</span>
+      <span class="tech-count" id="techCount">0 active</span>
+    </div>
+    <div class="tech-info">Techniques are auto-applied based on your task type and depth level. Higher depth = more techniques.</div>
+    <div id="techList" class="tech-list"></div>
+  </div>
+
+  <div class="footer">HailMary v9.0 — Autonomous Prompt Enhancer · Crescendo×Matrix×7 Patterns</div>
 </div>
 <script src="engine.js"></script>
 <script src="popup.js"></script>

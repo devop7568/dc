@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "HailMary — Autonomous Prompt Agent",
-  "version": "8.0.0",
-  "description": "World-class prompt enhancement with Direct/Indirect/Stealth injection modes, prompt scoring, templates, context capture, chain enhancement, and adaptive intelligence.",
+  "version": "9.0.0",
+  "description": "World-class prompt enhancement with Crescendo, Manipulation Matrix, 7 universal patterns, Direct/Indirect/Stealth injection, prompt scoring, templates, context capture, chain enhancement, and adaptive intelligence.",
   "permissions": ["activeTab","scripting","storage","clipboardWrite","clipboardRead","alarms"],
   "host_permissions": [
     "https://chat.openai.com/*","https://chatgpt.com/*",
@@ -14,7 +14,7 @@
     "https://labs.google/*","https://aistudio.google.com/*"
   ],
   "background": { "service_worker": "background.js" },
-  "action": { "default_popup": "popup.html", "default_title": "HailMary v8.0" },
+  "action": { "default_popup": "popup.html", "default_title": "HailMary v9.0" },
   "content_scripts": [{
     "matches": ["https://chat.openai.com/*","https://chatgpt.com/*",
                 "https://claude.ai/*","https://gemini.google.com/*",

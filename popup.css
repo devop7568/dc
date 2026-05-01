@@ -297,3 +297,37 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 .turn-body.open{display:block}
 .turn-preview{font-size:10.5px;color:var(--tx3);padding:0 11px 7px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* TECHNIQUES PANEL */
+.tech-panel{margin:6px 16px;background:var(--bg3);border:1px solid var(--bd);
+  border-radius:var(--r);overflow:hidden}
+.tech-panel-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:rgba(124,58,237,.08);border-bottom:1px solid var(--bd)}
+.tech-count{font-size:10px;color:var(--p2);background:rgba(124,58,237,.15);
+  padding:2px 8px;border-radius:10px;border:1px solid rgba(124,58,237,.3)}
+.tech-info{font-size:10px;color:var(--tx3);padding:6px 12px;
+  border-bottom:1px solid var(--bd);line-height:1.5}
+.tech-list{max-height:260px;overflow-y:auto;padding:4px 0}
+.tech-list::-webkit-scrollbar{width:3px}
+.tech-list::-webkit-scrollbar-thumb{background:var(--p);border-radius:2px}
+.tech-item{display:flex;align-items:flex-start;gap:8px;padding:6px 12px;
+  border-bottom:1px solid rgba(37,37,53,.5);transition:background .15s}
+.tech-item:last-child{border-bottom:none}
+.tech-item:hover{background:rgba(124,58,237,.05)}
+.tech-item-ico{font-size:16px;flex-shrink:0;margin-top:1px}
+.tech-item-info{flex:1;min-width:0}
+.tech-item-name{font-size:11px;font-weight:700;color:var(--tx)}
+.tech-item-src{font-size:9px;color:var(--p2);margin-left:6px;font-weight:400}
+.tech-item-desc{font-size:10px;color:var(--tx3);line-height:1.4;margin-top:1px}
+.tech-item-depth{font-size:9px;color:var(--fire);background:rgba(249,115,22,.1);
+  padding:1px 6px;border-radius:8px;border:1px solid rgba(249,115,22,.2);
+  flex-shrink:0;margin-top:2px}
+
+/* TECHNIQUE TAGS (shown in output) */
+.tech-row{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 6px;margin:0 16px}
+.tech-tag{font-size:9px;padding:2px 7px;border-radius:8px;
+  background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.25);
+  color:var(--p3);cursor:default;white-space:nowrap}
+.tech-tag .tech-tag-ico{margin-right:3px}
+.tech-tag.tech-active{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);
+  color:var(--green)}

@@ -170,6 +170,17 @@
       toast('Context cleared');
     });
 
+    // ── Techniques panel toggle ───────────────────────────────────────
+    el('techToggle').addEventListener('click', function () {
+      var panel = el('techPanel');
+      if (panel.style.display === 'none') {
+        renderTechPanel();
+        panel.style.display = '';
+      } else {
+        panel.style.display = 'none';
+      }
+    });
+
     // ── Toggle settings persist ──────────────────────────────────────
     ['tgInject', 'tgSubmit', 'tgChain'].forEach(function (id) {
       el(id).addEventListener('change', saveSettings);
@@ -235,6 +246,54 @@
       tipsHtml += '<div class="score-tip">\u26A0\uFE0F ' + esc(s) + '</div>';
     });
     el('scoreTips').innerHTML = tipsHtml;
+  }
+
+  // ── TECHNIQUES PANEL ──────────────────────────────────────────────
+  function renderTechPanel() {
+    var allTechs = window.HailMaryEngine.getTechniques();
+    var depth = parseInt(el('depthSlider').value, 10) || 4;
+    var list = el('techList');
+    list.innerHTML = '';
+    var activeCount = 0;
+    allTechs.forEach(function (tech) {
+      var isActive = depth >= tech.minDepth;
+      if (isActive) activeCount++;
+      var item = document.createElement('div');
+      item.className = 'tech-item';
+      item.style.opacity = isActive ? '1' : '0.4';
+      var depthLabel = 'Depth ' + tech.minDepth + '+';
+      item.innerHTML =
+        '<span class="tech-item-ico">' + tech.icon + '</span>' +
+        '<div class="tech-item-info">' +
+          '<div><span class="tech-item-name">' + esc(tech.name) + '</span>' +
+          '<span class="tech-item-src">' + esc(tech.source) + '</span></div>' +
+          '<div class="tech-item-desc">' + esc(tech.description) + '</div>' +
+        '</div>' +
+        '<span class="tech-item-depth">' + depthLabel + '</span>';
+      list.appendChild(item);
+    });
+    el('techCount').textContent = activeCount + ' / ' + allTechs.length + ' active';
+  }
+
+  function renderTechTags(techniques) {
+    var allTechs = window.HailMaryEngine.getTechniques();
+    var techMap = {};
+    allTechs.forEach(function (t) { techMap[t.id] = t; });
+    var row = el('techRow');
+    var html = '';
+    (techniques || []).forEach(function (id) {
+      var tech = techMap[id];
+      if (tech) {
+        html += '<span class="tech-tag tech-active"><span class="tech-tag-ico">' +
+          tech.icon + '</span>' + esc(tech.name) + '</span>';
+      }
+    });
+    if (html) {
+      row.innerHTML = html;
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
   }
 
   // ── CONTEXT CAPTURE ────────────────────────────────────────────────
@@ -419,6 +478,7 @@
         window.HailMaryEngine.enhance(raw, currentMode, 'auto', opts).then(function (result) {
           lastResult = result;
           renderOutput(result);
+          renderTechTags(result.techniques);
           show('outWrap');
           el('outWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           saveHistory(result);
