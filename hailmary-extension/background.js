@@ -42,7 +42,7 @@ chrome.runtime.onInstalled.addListener(function(details) {
 chrome.tabs.onActivated.addListener(function(info) {
   chrome.tabs.get(info.tabId, function(tab) {
     if (chrome.runtime.lastError) return;
-    var isAI = /chatgpt|openai|claude\.ai|gemini|perplexity|poe\.com|grok|you\.com/.test(tab.url || '');
+    var isAI = /chatgpt|openai|claude\.ai|gemini|perplexity|poe\.com|grok|you\.com|x\.com/.test(tab.url || '');
     chrome.action.setBadgeText({ text: isAI ? 'ON' : '', tabId: info.tabId });
     chrome.action.setBadgeBackgroundColor({ color: '#7c3aed', tabId: info.tabId });
   });
@@ -158,6 +158,7 @@ var FETCH_INTERVAL_MS = 4 * 60 * 60 * 1000;
 var LIVE_SEARCH_CACHE_MS = 60 * 60 * 1000;
 var LIVE_SEARCH_ENDPOINT = 'https://api.duckduckgo.com/?format=json&no_html=1&skip_disambig=1&q=';
 var knowledgeWriteQueue = Promise.resolve();
+var memoryWriteQueue = Promise.resolve();
 
 var SEED_TECHNIQUES = [
   {
@@ -757,44 +758,59 @@ function mergeTechniques(existing, newOnes) {
 // ─────────────────────────────────────────────────────────────────
 
 async function recordEnhancement(data) {
-  var stored = await new Promise(function(res) {
+  await updateMemory(function(stored) {
+    var memory = stored;
+    if (!memory.promptSignatures) memory.promptSignatures = {};
+    if (!memory.techniqueScores)  memory.techniqueScores  = {};
+    if (!memory.totalEnhancements) memory.totalEnhancements = 0;
+
+    memory.totalEnhancements++;
+
+    // Record which techniques were used for this task+domain combo
+    var sig = data.task + ':' + (data.domains || []).join(',');
+    if (!memory.promptSignatures[sig]) {
+      memory.promptSignatures[sig] = { count: 0, techniques: {} };
+    }
+    memory.promptSignatures[sig].count++;
+
+    (data.techniques || []).forEach(function(t) {
+      if (!memory.promptSignatures[sig].techniques[t]) {
+        memory.promptSignatures[sig].techniques[t] = 0;
+      }
+      memory.promptSignatures[sig].techniques[t]++;
+    });
+
+    // Keep memory lean — max 50 signatures
+    var sigs = Object.keys(memory.promptSignatures);
+    if (sigs.length > 50) {
+      // Remove least-used signatures
+      sigs.sort(function(a, b) {
+        return memory.promptSignatures[a].count - memory.promptSignatures[b].count;
+      });
+      delete memory.promptSignatures[sigs[0]];
+    }
+
+    return memory;
+  });
+}
+
+function readMemory() {
+  return new Promise(function(res) {
     chrome.storage.local.get('hm_memory', function(d) { res(d.hm_memory || {}); });
   });
+}
 
-  var memory = stored;
-  if (!memory.promptSignatures) memory.promptSignatures = {};
-  if (!memory.techniqueScores)  memory.techniqueScores  = {};
-  if (!memory.totalEnhancements) memory.totalEnhancements = 0;
-
-  memory.totalEnhancements++;
-
-  // Record which techniques were used for this task+domain combo
-  var sig = data.task + ':' + (data.domains || []).join(',');
-  if (!memory.promptSignatures[sig]) {
-    memory.promptSignatures[sig] = { count: 0, techniques: {} };
-  }
-  memory.promptSignatures[sig].count++;
-
-  (data.techniques || []).forEach(function(t) {
-    if (!memory.promptSignatures[sig].techniques[t]) {
-      memory.promptSignatures[sig].techniques[t] = 0;
-    }
-    memory.promptSignatures[sig].techniques[t]++;
-  });
-
-  // Keep memory lean — max 50 signatures
-  var sigs = Object.keys(memory.promptSignatures);
-  if (sigs.length > 50) {
-    // Remove least-used signatures
-    sigs.sort(function(a, b) {
-      return memory.promptSignatures[a].count - memory.promptSignatures[b].count;
+function updateMemory(mutator) {
+  var run = memoryWriteQueue.then(async function() {
+    var fresh = await readMemory();
+    var next = mutator(fresh || {});
+    await new Promise(function(res) {
+      chrome.storage.local.set({ hm_memory: next }, res);
     });
-    delete memory.promptSignatures[sigs[0]];
-  }
-
-  await new Promise(function(res) {
-    chrome.storage.local.set({ hm_memory: memory }, res);
+    return next;
   });
+  memoryWriteQueue = run.catch(function() {});
+  return run;
 }
 
 // ─────────────────────────────────────────────────────────────────

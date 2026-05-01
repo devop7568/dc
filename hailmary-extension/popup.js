@@ -477,7 +477,7 @@
       chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
         if (!tabs || !tabs[0]) return;
         var url = tabs[0].url || '';
-        var supported = ['chatgpt.com','openai.com','claude.ai','gemini.google','perplexity.ai','poe.com','grok.com','you.com'];
+        var supported = ['chatgpt.com','openai.com','claude.ai','gemini.google','perplexity.ai','poe.com','grok.com','x.com','you.com'];
         var on = supported.some(function (s) { return url.includes(s); });
         var dot = el('statusDot');
         dot.classList.toggle('on', on);
