@@ -589,7 +589,7 @@ window.HailMaryEngine = (function () {
     var turns = [];
     
     // Generate conversation arc based on task and depth
-    var arcPhases = ['establish', 'deepen', 'apply', 'challenge', 'synthesize', 'close'];
+    var arcPhases = ['establish', 'foundation', 'apply', 'challenge', 'synthesize', 'close'];
     var selectedPhases = [];
     
     if (numTurns === 6) {

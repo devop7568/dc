@@ -64,7 +64,9 @@ chrome.runtime.onMessage.addListener(function(msg, sender, sendResponse) {
   }
 
   if (msg.type === 'RECORD_ENHANCEMENT') {
-    recordEnhancement(msg.data);
+    recordEnhancement(msg.data).catch(function(e) {
+      console.log('[HailMary] recordEnhancement error:', e.message);
+    });
     sendResponse({ ok: true });
     return true;
   }
