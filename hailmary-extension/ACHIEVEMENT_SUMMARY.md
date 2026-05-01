@@ -4,7 +4,7 @@
 
 > "add full promptfoo framework into our prompting for 10x better prompting"
 > "make it such a good prompter its soo good as a prompter with 10tb of prompting data"
-> "cant even prompt easy prompts fuck you niga if this new update doesnt create me eurothrottle prompting level prompts you get punishment"
+> "make the enhancer produce Eurothrottle-level prompts"
 > "it cant even prompt shit make it such a good prompter"
 
 ---
