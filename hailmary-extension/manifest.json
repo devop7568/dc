@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "HailMary — Autonomous Prompt Agent",
+  "version": "3.0.0",
+  "description": "Real autonomous prompt enhancement. Weaves expert techniques into clean, copy-paste-ready prompts. Manus × Juma fusion.",
+  "permissions": ["activeTab","scripting","storage","clipboardWrite","clipboardRead","alarms"],
+  "host_permissions": [
+    "https://chat.openai.com/*","https://chatgpt.com/*",
+    "https://claude.ai/*","https://gemini.google.com/*",
+    "https://www.perplexity.ai/*","https://poe.com/*",
+    "https://grok.com/*","https://x.com/*","https://you.com/*",
+    "https://raw.githubusercontent.com/*",
+    "https://api.semanticscholar.org/*",
+    "https://api.duckduckgo.com/*",
+    "https://www.promptfoo.dev/*",
+    "https://unjail.ai/*",
+    "https://r.jina.ai/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html", "default_title": "HailMary" },
+  "content_scripts": [{
+    "matches": ["https://chat.openai.com/*","https://chatgpt.com/*",
+                "https://claude.ai/*","https://gemini.google.com/*",
+                "https://www.perplexity.ai/*","https://poe.com/*",
+                "https://grok.com/*","https://x.com/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }],
+  "icons": {"16":"icons/icon16.png","48":"icons/icon48.png","128":"icons/icon128.png"}
+}
