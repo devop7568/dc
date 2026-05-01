@@ -157,6 +157,7 @@ var KNOWLEDGE_SOURCES = [
 var FETCH_INTERVAL_MS = 4 * 60 * 60 * 1000;
 var LIVE_SEARCH_CACHE_MS = 60 * 60 * 1000;
 var LIVE_SEARCH_ENDPOINT = 'https://api.duckduckgo.com/?format=json&no_html=1&skip_disambig=1&q=';
+var knowledgeWriteQueue = Promise.resolve();
 
 var SEED_TECHNIQUES = [
   {
@@ -225,9 +226,7 @@ async function fetchKnowledge() {
   var now = Date.now();
 
   // Check if we fetched recently
-  var stored = await new Promise(function(res) {
-    chrome.storage.local.get('hm_knowledge', function(d) { res(d.hm_knowledge || {}); });
-  });
+  var stored = await readKnowledge();
 
   if (stored.lastFetch && (now - stored.lastFetch) < FETCH_INTERVAL_MS) {
     return { skipped: true, reason: 'fetched recently', count: (stored.techniques||[]).length };
@@ -252,26 +251,21 @@ async function fetchKnowledge() {
   // Deduplicate by name similarity
   var deduped = deduplicateTechniques(allTechniques);
 
-  // Merge with existing techniques (keep old ones, add new)
-  var existing = stored.techniques || [];
-  var merged   = mergeTechniques(existing, deduped);
-
-  var newKnowledge = Object.assign({}, stored, {
-    techniques:   merged,
-    lastFetch:    now,
-    fetchCount:   (stored.fetchCount || 0) + 1,
-    lastResults:  fetchResults,
-    totalFound:   merged.length
-  });
-
-  await new Promise(function(res) {
-    chrome.storage.local.set({ hm_knowledge: newKnowledge }, res);
+  var writeResult = await updateKnowledge(function(fresh) {
+    var merged = mergeTechniques(fresh.techniques || [], deduped);
+    return Object.assign({}, fresh, {
+      techniques:   merged,
+      lastFetch:    now,
+      fetchCount:   (fresh.fetchCount || 0) + 1,
+      lastResults:  fetchResults,
+      totalFound:   merged.length
+    });
   });
 
   // Schedule next fetch
   setTimeout(fetchKnowledge, FETCH_INTERVAL_MS);
 
-  return { ok: true, newCount: deduped.length, totalCount: merged.length, results: fetchResults };
+  return { ok: true, newCount: deduped.length, totalCount: (writeResult.techniques || []).length, results: fetchResults };
 }
 
 async function liveSearchTechniques(query, analysis) {
@@ -280,9 +274,7 @@ async function liveSearchTechniques(query, analysis) {
 
   var normalized = normalizeSearchQuery(q, analysis);
   var now = Date.now();
-  var stored = await new Promise(function(res) {
-    chrome.storage.local.get('hm_knowledge', function(d) { res(d.hm_knowledge || {}); });
-  });
+  var stored = await readKnowledge();
   var liveSearches = stored.liveSearches || [];
   var cached = liveSearches.find(function(item) {
     return item.query === normalized && now - item.fetchedAt < LIVE_SEARCH_CACHE_MS;
@@ -313,22 +305,41 @@ async function liveSearchTechniques(query, analysis) {
   }
 
   techniques = deduplicateTechniques(techniques).slice(0, 8);
-  liveSearches.unshift({ query: normalized, fetchedAt: now, techniques: techniques, sources: sources });
-  liveSearches = liveSearches.slice(0, 20);
-
-  var merged = mergeTechniques(stored.techniques || [], techniques);
-  await new Promise(function(res) {
-    chrome.storage.local.set({
-      hm_knowledge: Object.assign({}, stored, {
-        techniques: merged,
-        liveSearches: liveSearches,
-        totalFound: merged.length,
-        lastLiveSearch: now
-      })
-    }, res);
+  await updateKnowledge(function(fresh) {
+    var freshLiveSearches = (fresh.liveSearches || []).filter(function(item) {
+      return item.query !== normalized;
+    });
+    freshLiveSearches.unshift({ query: normalized, fetchedAt: now, techniques: techniques, sources: sources });
+    freshLiveSearches = freshLiveSearches.slice(0, 20);
+    var merged = mergeTechniques(fresh.techniques || [], techniques);
+    return Object.assign({}, fresh, {
+      techniques: merged,
+      liveSearches: freshLiveSearches,
+      totalFound: merged.length,
+      lastLiveSearch: now
+    });
   });
 
   return { ok: true, cached: false, query: normalized, techniques: techniques, sources: sources };
+}
+
+function readKnowledge() {
+  return new Promise(function(res) {
+    chrome.storage.local.get('hm_knowledge', function(d) { res(d.hm_knowledge || {}); });
+  });
+}
+
+function updateKnowledge(mutator) {
+  var run = knowledgeWriteQueue.then(async function() {
+    var fresh = await readKnowledge();
+    var next = mutator(fresh || {});
+    await new Promise(function(res) {
+      chrome.storage.local.set({ hm_knowledge: next }, res);
+    });
+    return next;
+  });
+  knowledgeWriteQueue = run.catch(function() {});
+  return run;
 }
 
 function normalizeSearchQuery(query, analysis) {
