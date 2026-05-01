@@ -349,7 +349,12 @@ window.HailMaryEngine = (function () {
   // Selects which techniques to apply based on task, depth, and analysis
   function selectTechniques(a, depth) {
     var selected = [];
+    // Skip roleAssumption — mode builders (buildHailMary/buildManus/buildJuma) already
+    // inject a role persona via pickRole(). Including roleAssumption would create
+    // a second conflicting "You are a..." identity in the prompt.
+    var skip = { roleAssumption: true };
     for (var key in TECHNIQUES) {
+      if (skip[key]) continue;
       var tech = TECHNIQUES[key];
       if (depth < tech.minDepth) continue;
       if (tech.tasks.includes('all') || tech.tasks.includes(a.task)) {
