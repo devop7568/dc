@@ -18,7 +18,7 @@
 
   // ── STATE ──────────────────────────────────────────────────────────
   var currentMode  = 'hailmary';
-  var currentTurns = 8;
+  var currentTurns = 6;
   var lastResult   = null;
   var lastTurns    = null;
   var MAX_HIST     = 20;
