@@ -259,7 +259,7 @@
     tags += '<span class="tag ' + (cx === 'high' ? 'cplx-h' : cx === 'low' ? 'cplx-l' : 'cplx-m') + '">' + cx + '</span>';
     if (r.autoRouted) tags += '<span class="tag">auto→' + r.mode + '</span>';
     (r.techniques || []).slice(0, 10).forEach(function (t) {
-      tags += '<span class="tag">' + t + '</span>';
+      tags += '<span class="tag">' + esc(t) + '</span>';
     });
     el('tagRow').innerHTML = tags;
     el('outBox').textContent = r.enhanced;

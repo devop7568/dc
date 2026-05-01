@@ -22,7 +22,7 @@
     "matches": ["https://chat.openai.com/*","https://chatgpt.com/*",
                 "https://claude.ai/*","https://gemini.google.com/*",
                 "https://www.perplexity.ai/*","https://poe.com/*",
-                "https://grok.com/*","https://x.com/*"],
+                "https://grok.com/*","https://x.com/*","https://you.com/*"],
     "js": ["content.js"],
     "run_at": "document_idle"
   }],
