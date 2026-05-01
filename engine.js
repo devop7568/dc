@@ -1005,6 +1005,9 @@ window.HailMaryEngine = (function () {
     buildContextEnhancement: function (raw, capturedContext) {
       return buildContextEnhancement(raw, capturedContext);
     },
+    rebuildInjectionStrategies: function (enhanced, raw, mode) {
+      return buildInjectionStrategy(enhanced, raw, mode || 'hailmary');
+    },
     getModeLabel: function (mode) {
       return { hailmary: '☄️ Hail Mary', manus: '🧠 Manus', juma: '⚡ Juma', auto: '🤖 Auto', turns: '🔄 Turns' }[mode] || mode;
     },

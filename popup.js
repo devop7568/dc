@@ -300,12 +300,17 @@
 
   // ── RE-CHAIN ───────────────────────────────────────────────────────
   function handleRechain() {
-    if (!lastResult) return;
+    if (!lastResult || !lastResult.enhanced) return;
     var depth = parseInt(el('depthSlider').value, 10) || 4;
-    var chained = window.HailMaryEngine.chainEnhance(lastResult.enhanced, depth, lastResult.mode);
+    var mode = lastResult.mode || 'hailmary';
+    var chained = window.HailMaryEngine.chainEnhance(lastResult.enhanced, depth, mode);
     lastResult.enhanced = chained;
-    lastResult.stats.techniqueCount += 3;
-    lastResult.techniques.push('chainReview');
+    if (lastResult.stats) lastResult.stats.techniqueCount += 3;
+    if (lastResult.techniques) lastResult.techniques.push('chainReview');
+    // Rebuild injection strategies with the chained content
+    lastResult.injectionStrategies = window.HailMaryEngine.rebuildInjectionStrategies(
+      chained, lastResult.original || '', mode
+    );
     el('outBox').textContent = chained;
     toast('\uD83D\uDD17 Chain pass applied!');
   }
@@ -731,7 +736,16 @@
             el('rawInput').value = item.raw;
             el('outBox').textContent = item.enhanced;
             show('outWrap');
-            lastResult = { enhanced: item.enhanced, original: item.raw, injectionStrategies: null };
+            lastResult = {
+              enhanced: item.enhanced,
+              original: item.raw,
+              mode: item.mode || 'hailmary',
+              techniques: [],
+              stats: { techniqueCount: 0, powerMultiplier: '1.0', duration: 0 },
+              injectionStrategies: window.HailMaryEngine.rebuildInjectionStrategies(
+                item.enhanced, item.raw, item.mode || 'hailmary'
+              )
+            };
             list.style.display = 'none';
             toast('\uD83D\uDCDC Loaded from history');
           });
