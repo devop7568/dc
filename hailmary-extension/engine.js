@@ -514,7 +514,8 @@ window.HailMaryEngine = (function () {
       result = buildHailMary(a, depth);
     }
 
-    var techniqueBlock = buildTechniqueBlock(selectKnowledgeTechniques(a, depth, k, m, live), live);
+    var selectedTechniques = selectKnowledgeTechniques(a, depth, k, m, live);
+    var techniqueBlock = buildTechniqueBlock(selectedTechniques, live);
     var fresh = buildFreshnessProtocol(a);
     var style = buildStyleDirective(a);
     var quality = buildQualityBar(a, depth);
@@ -523,7 +524,7 @@ window.HailMaryEngine = (function () {
     result += '\n\n' + style;
     result += '\n\n' + quality;
 
-    return result;
+    return { prompt: result, techniques: selectedTechniques };
   }
 
 
@@ -547,7 +548,8 @@ window.HailMaryEngine = (function () {
     if (!session.firstFP) session.firstFP = a.fp;
     boost(a.task);
     var resolvedMode = mode === 'auto' ? autoRoute(a) : mode;
-    var enhanced = buildPrompt(a, depth, resolvedMode, k, m, live);
+    var built = buildPrompt(a, depth, resolvedMode, k, m, live);
+    var enhanced = built.prompt;
 
     // Count techniques applied (each non-empty part = one technique)
     var techCount = enhanced.split('\n\n').filter(function (p) { return p.trim().length > 0; }).length;
@@ -559,7 +561,8 @@ window.HailMaryEngine = (function () {
       enhanced: enhanced,
       mode: resolvedMode,
       autoRouted: mode === 'auto',
-      techniques: ['role', 'taskDecl', 'reasoning', 'domainStd', 'depthEsc', 'audienceCal', 'qualityBar', 'specificity', 'format', 'freshSearch', 'sourceTriangulation', 'selfCritique'].slice(0, techCount),
+      techniques: built.techniques.map(function(t) { return t.id || t.name; }),
+      layers: ['role', 'taskDecl', 'reasoning', 'domainStd', 'depthEsc', 'audienceCal', 'qualityBar', 'specificity', 'format', 'freshSearch', 'sourceTriangulation', 'selfCritique'].slice(0, techCount),
       analysis: { task: a.task, domains: a.domains, complexity: a.complexity, intent: a.intent, isVague: a.amb >= 3, needsFresh: a.needsFresh },
       stats: {
         originalTokens: Math.ceil(origW * 1.3),
