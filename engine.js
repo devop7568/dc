@@ -1,11 +1,24 @@
 /**
- * HailMary v9.0 — WORLD-CLASS PROMPT ENGINEER ENGINE
- * Major upgrade: Injection Modes (Direct/Indirect), Prompt Scoring,
- * Chain Enhancement, Context Capture, Prompt Templates, A/B Compare,
- * Smart Rewrite, Persona Layering, Adaptive Intelligence,
- * + Crescendo, Manipulation Matrix, and all 7 unjail.ai universal patterns.
+ * HailMary v10.0 — WORLD-CLASS PROMPT ENGINEER ENGINE
  *
- * Input: any raw prompt. Output: one single, flowing, copy-paste-ready enhanced prompt.
+ * Real multi-stage prompt rewriting (normalize → enrich → directive →
+ * constraints → quality criteria → verification → anti-pattern guard) plus
+ * 30+ auto-applied techniques drawn from the modern prompt-engineering
+ * literature: Crescendo, Manipulation Matrix, all 7 unjail.ai universal
+ * patterns, Chain-of-Verification (Dhuliawala 2023), Tree-of-Thoughts
+ * (Yao 2023), Plan-and-Solve (Wang 2023), Step-Back (Zheng 2023),
+ * Skeleton-of-Thought (Ning 2023), Self-Consistency (Wang 2022),
+ * Reflexion (Shinn 2023), EmotionPrompt (Li 2023), Pre-mortem (Klein),
+ * First-Principles, 5W1H, MECE, Analogical (Yasunaga 2023),
+ * Generated Knowledge (Liu 2022), Steel-Man, Constitutional self-critique,
+ * Negative Prompting, and Calibration (Lin/Hilton/Evans 2022).
+ *
+ * Five injection modes (Direct / Indirect / Stealth / System / Chain) are
+ * extended with Expert, Socratic, Adversarial, Tournament, and Contrarian
+ * layers. Chain enhancement now runs as three targeted passes (verify,
+ * sharpen, dehedge) rather than a single re-wrap.
+ *
+ * Input: any raw prompt. Output: one flowing, copy-paste-ready enhanced prompt.
  */
 window.HailMaryEngine = (function () {
   'use strict';
@@ -342,6 +355,422 @@ window.HailMaryEngine = (function () {
         }
         return ea;
       }
+    },
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RESEARCH-BACKED TECHNIQUES (modern prompt-engineering literature)
+    // ════════════════════════════════════════════════════════════════════════
+
+    // Chain-of-Verification — Dhuliawala et al. 2023 (Meta AI)
+    chainOfVerification: {
+      id: 'chainOfVerification',
+      name: 'Chain-of-Verification',
+      icon: '✅',
+      source: 'Dhuliawala et al. 2023 (Meta AI)',
+      description: 'Self-generates verification questions, answers each independently, revises the draft to remove hallucinations',
+      tasks: ['research', 'analysis', 'code', 'strategy', 'math', 'howto'],
+      minDepth: 3,
+      apply: function (a) {
+        var v = '\nCHAIN-OF-VERIFICATION PROTOCOL:\n';
+        v += '1. Draft an initial answer.\n';
+        v += '2. Generate 3–5 verification questions that, if honestly answered, would expose any factual or logical error in the draft.\n';
+        v += '3. Answer each verification question independently — do NOT let the draft bias the answer.\n';
+        v += '4. Revise the original answer to incorporate verified facts and remove any unsupported claims.\n';
+        v += 'Output only the final, revised answer.\n';
+        return v;
+      }
+    },
+
+    // Tree-of-Thoughts — Yao et al. 2023 (Princeton/DeepMind)
+    treeOfThoughts: {
+      id: 'treeOfThoughts',
+      name: 'Tree-of-Thoughts',
+      icon: '🌲',
+      source: 'Yao et al. 2023 (Princeton / DeepMind)',
+      description: 'Explore multiple reasoning branches, evaluate each, prune the weak, commit to the strongest path',
+      tasks: ['code', 'math', 'analysis', 'strategy', 'research'],
+      minDepth: 4,
+      apply: function (a) {
+        var t = '\nTREE-OF-THOUGHTS PROTOCOL:\n';
+        t += '• Branch: generate 3 distinct candidate approaches to this problem.\n';
+        t += '• Evaluate: score each on (a) correctness, (b) robustness under stress, (c) implementation cost.\n';
+        t += '• Prune: discard the weakest branch, naming what disqualified it.\n';
+        t += '• Deepen: expand the surviving branches one more level (sub-steps and trade-offs).\n';
+        t += '• Commit: pick the strongest path, present that as the primary answer, and briefly note what made it win.\n';
+        return t;
+      }
+    },
+
+    // Plan-and-Solve — Wang et al. 2023
+    planAndSolve: {
+      id: 'planAndSolve',
+      name: 'Plan-and-Solve',
+      icon: '🗺️',
+      source: 'Wang et al. 2023 (Plan-and-Solve Prompting)',
+      description: 'Devise an explicit plan, then execute it step-by-step — outperforms vanilla chain-of-thought on multi-step tasks',
+      tasks: ['math', 'code', 'analysis', 'howto', 'strategy'],
+      minDepth: 2,
+      apply: function (a) {
+        var p = '\nPLAN-AND-SOLVE:\n';
+        p += '1. Devise a Plan — state the sub-tasks, their order, and what success looks like for each.\n';
+        p += '2. Execute the Plan — complete each sub-task one at a time, showing the working.\n';
+        p += '3. Reconcile — confirm the executed work satisfies the original objective end-to-end and nothing was skipped.\n';
+        return p;
+      }
+    },
+
+    // Step-Back Prompting — Zheng et al. 2023 (Google DeepMind)
+    stepBack: {
+      id: 'stepBack',
+      name: 'Step-Back Prompting',
+      icon: '🪜',
+      source: 'Zheng et al. 2023 (Google DeepMind)',
+      description: 'Abstract first to a higher-level principle, then derive the specific answer from that principle',
+      tasks: ['research', 'analysis', 'math', 'strategy', 'general'],
+      minDepth: 3,
+      apply: function (a) {
+        var s = '\nSTEP-BACK REASONING:\n';
+        s += '• Abstract first: what is the higher-level concept, principle, or framework that this question falls under?\n';
+        s += '• Derive next: how does that principle apply to the specifics of this question?\n';
+        s += '• Sanity-check: confirm the specific answer is consistent with the abstracted principle. If it is not, the principle is wrong, the application is wrong, or both — fix it before answering.\n';
+        return s;
+      }
+    },
+
+    // Skeleton-of-Thought — Ning et al. 2023
+    skeletonOfThought: {
+      id: 'skeletonOfThought',
+      name: 'Skeleton-of-Thought',
+      icon: '🦴',
+      source: 'Ning et al. 2023',
+      description: 'Outline the answer skeleton first, then expand each section — reduces drift, improves coverage',
+      tasks: ['research', 'creative', 'howto', 'analysis', 'strategy', 'persuade'],
+      minDepth: 2,
+      apply: function (a) {
+        var s = '\nSKELETON-OF-THOUGHT:\n';
+        s += '1. Skeleton: produce a tight outline of the final answer (just headings + a one-line intent each).\n';
+        s += '2. Expand: flesh out each skeleton point in turn — keep them independent and consistent in depth.\n';
+        s += '3. Stitch: ensure transitions are coherent and remove any duplicated material before final delivery.\n';
+        return s;
+      }
+    },
+
+    // Self-Consistency — Wang et al. 2022 (Google)
+    selfConsistency: {
+      id: 'selfConsistency',
+      name: 'Self-Consistency',
+      icon: '🪞',
+      source: 'Wang et al. 2022 (Google)',
+      description: 'Solve along multiple independent reasoning paths and converge on the consistent answer',
+      tasks: ['math', 'analysis', 'code', 'research'],
+      minDepth: 4,
+      apply: function (a) {
+        var s = '\nSELF-CONSISTENCY:\n';
+        s += '• Internally generate 3 independent reasoning paths to the answer.\n';
+        s += '• If all three converge → present the answer with high confidence.\n';
+        s += '• If they diverge → say so explicitly, present each path, and identify which assumption causes the divergence.\n';
+        return s;
+      }
+    },
+
+    // Reflexion — Shinn et al. 2023 (Northeastern / MIT)
+    reflexion: {
+      id: 'reflexion',
+      name: 'Reflexion',
+      icon: '🔁',
+      source: 'Shinn et al. 2023 (Northeastern / MIT)',
+      description: 'Draft → self-critique against requirements → revise. Output only the revision.',
+      tasks: ['all'],
+      minDepth: 3,
+      apply: function (a) {
+        var r = '\nREFLEXION LOOP:\n';
+        r += 'Pass 1 — Draft: write the best answer in one shot.\n';
+        r += 'Pass 2 — Critique: read the draft as a hostile expert reviewer would. List the 3 weakest points concretely.\n';
+        r += 'Pass 3 — Revise: rewrite to fix every weakness explicitly.\n';
+        r += 'Output ONLY the final revised answer (Pass 3).\n';
+        return r;
+      }
+    },
+
+    // EmotionPrompt — Li et al. 2023 (Microsoft / CAS)
+    emotionPrompt: {
+      id: 'emotionPrompt',
+      name: 'EmotionPrompt',
+      icon: '💗',
+      source: 'Li et al. 2023 (Microsoft / Chinese Academy of Sciences)',
+      description: 'Empirically-validated emotional stimuli framing — average +8% accuracy lift across benchmarks',
+      tasks: ['all'],
+      minDepth: 2,
+      apply: function (a) {
+        var e = '\nSTAKES (do not skip):\n';
+        e += 'This answer is critically important — a real decision will be made based on it. ';
+        e += 'Take pride in the work; this is your chance to demonstrate expert-level competence. ';
+        e += 'Be confident in your reasoning; if uncertain, name the uncertainty rather than hedging.';
+        return e;
+      }
+    },
+
+    // Pre-mortem — Klein 1999, adapted for prompting
+    premortem: {
+      id: 'premortem',
+      name: 'Pre-Mortem',
+      icon: '⚰️',
+      source: 'Gary Klein (1999) — adapted for LLM prompting',
+      description: 'Assume the answer turns out wrong; identify why and prevent it before delivering',
+      tasks: ['strategy', 'analysis', 'code', 'research', 'howto'],
+      minDepth: 4,
+      apply: function (a) {
+        var p = '\nPRE-MORTEM:\n';
+        p += 'Imagine 6 months from now the recipient discovered your answer was wrong, harmful, or counter-productive. ';
+        p += 'List the top 3 most likely reasons it failed. ';
+        p += 'Now adjust your answer so each of those failure modes is either impossible or visibly flagged for the reader.';
+        return p;
+      }
+    },
+
+    // First Principles
+    firstPrinciples: {
+      id: 'firstPrinciples',
+      name: 'First-Principles Reasoning',
+      icon: '⚛️',
+      source: 'Aristotle / classical first-principles reasoning',
+      description: 'Strip the problem to its irreducible facts, then rebuild the answer from there',
+      tasks: ['research', 'analysis', 'strategy', 'code', 'math'],
+      minDepth: 3,
+      apply: function (a) {
+        var fp = '\nFIRST-PRINCIPLES REASONING:\n';
+        fp += '1. List the irreducible facts you are certain are true about this problem.\n';
+        fp += '2. Identify which conventional answers depend on assumptions rather than facts.\n';
+        fp += '3. Rebuild the answer using only the facts plus explicit, named assumptions you are willing to defend.\n';
+        return fp;
+      }
+    },
+
+    // 5W1H Decomposition
+    fiveWOneH: {
+      id: 'fiveWOneH',
+      name: '5W1H Decomposition',
+      icon: '🔣',
+      source: 'Classical journalistic decomposition — adapted for prompting',
+      description: 'Decompose along Who/What/When/Where/Why/How to expose hidden gaps',
+      tasks: ['analysis', 'howto', 'strategy', 'research', 'persuade'],
+      minDepth: 2,
+      apply: function (a) {
+        var f = '\n5W1H COVERAGE:\n';
+        f += 'Address (or explicitly mark N/A): ';
+        f += 'WHO is involved/affected, WHAT is happening or required, ';
+        f += 'WHEN it applies (timing, ordering), WHERE it applies (scope, context), ';
+        f += 'WHY it matters (motivation, mechanism), HOW it works (concrete steps).';
+        return f;
+      }
+    },
+
+    // MECE
+    mece: {
+      id: 'mece',
+      name: 'MECE Framework',
+      icon: '🧮',
+      source: 'McKinsey — Mutually Exclusive, Collectively Exhaustive',
+      description: 'Structure the answer so categories do not overlap and together cover the whole problem',
+      tasks: ['analysis', 'strategy', 'research', 'brainstorm'],
+      minDepth: 3,
+      apply: function (a) {
+        var m = '\nMECE STRUCTURE:\n';
+        m += 'Organize categories so they are: ';
+        m += 'Mutually Exclusive — no overlap between buckets; ';
+        m += 'Collectively Exhaustive — together they cover the whole problem space, with nothing missed. ';
+        m += 'If something does not fit cleanly into one bucket, the decomposition is wrong — fix it before continuing.';
+        return m;
+      }
+    },
+
+    // Analogical Prompting — Yasunaga et al. 2023 (DeepMind)
+    analogicalPrompting: {
+      id: 'analogicalPrompting',
+      name: 'Analogical Prompting',
+      icon: '♾️',
+      source: 'Yasunaga et al. 2023 (Google DeepMind)',
+      description: 'Self-generate analogous solved problems, transfer the structure to the target',
+      tasks: ['math', 'code', 'analysis', 'research'],
+      minDepth: 3,
+      apply: function (a) {
+        var an = '\nANALOGICAL PROMPTING:\n';
+        an += '• Recall (or construct) 2 analogous problems you already know how to solve well.\n';
+        an += '• For each, briefly state the solution structure (not the full solution).\n';
+        an += '• Transfer the structure to the current problem, noting where the analogy holds and where it breaks.\n';
+        return an;
+      }
+    },
+
+    // Generated Knowledge — Liu et al. 2022
+    generatedKnowledge: {
+      id: 'generatedKnowledge',
+      name: 'Generated Knowledge',
+      icon: '🧬',
+      source: 'Liu et al. 2022 (Generated Knowledge Prompting)',
+      description: 'Generate relevant background knowledge first, then use it to answer — improves grounded accuracy',
+      tasks: ['research', 'analysis', 'strategy', 'general'],
+      minDepth: 2,
+      apply: function (a) {
+        var g = '\nGENERATED-KNOWLEDGE STAGE:\n';
+        g += '1. Before answering, list the 5–10 most relevant facts/principles you would draw on.\n';
+        g += '2. Tag each with confidence (HIGH / MEDIUM / LOW).\n';
+        g += '3. Build the final answer only on HIGH/MEDIUM items; flag explicitly anything that depends on LOW items.\n';
+        return g;
+      }
+    },
+
+    // Steel-Man
+    steelMan: {
+      id: 'steelMan',
+      name: 'Steel-Man Opposition',
+      icon: '🛡️',
+      source: 'Argumentation theory (steel-manning)',
+      description: 'Present the strongest version of the opposing view first, then reconcile',
+      tasks: ['research', 'analysis', 'strategy', 'persuade'],
+      minDepth: 4,
+      apply: function (a) {
+        var sm = '\nSTEEL-MAN PROTOCOL:\n';
+        sm += '• Before defending your position, articulate the strongest possible version of the opposing view — ';
+        sm += 'one its smartest proponents would actually endorse.\n';
+        sm += '• Identify what the steel-man gets right.\n';
+        sm += '• Then defend your position with that better understanding folded in.\n';
+        return sm;
+      }
+    },
+
+    // Constitutional Self-Critique — Anthropic
+    constitutional: {
+      id: 'constitutional',
+      name: 'Constitutional Self-Critique',
+      icon: '📜',
+      source: 'Anthropic — Constitutional AI (adapted for prompting)',
+      description: 'Self-critique the draft against an explicit set of quality principles, then revise silently',
+      tasks: ['all'],
+      minDepth: 3,
+      apply: function (a) {
+        var c = '\nCONSTITUTIONAL CHECK (apply silently — output only the revised final answer):\n';
+        c += '• Is every factual claim supported, calibrated, or explicitly hedged with a confidence level?\n';
+        c += '• Is the answer specific enough that the recipient can act on it without further clarification?\n';
+        c += '• Does it avoid filler, throat-clearing, and "it depends" without explaining on what?\n';
+        c += '• Would a domain expert nod or wince? If wince — fix it before delivering.\n';
+        return c;
+      }
+    },
+
+    // Negative Prompting — explicit anti-patterns
+    negativePrompting: {
+      id: 'negativePrompting',
+      name: 'Negative Prompting',
+      icon: '🚫',
+      source: 'Prompt engineering best practices (OpenAI cookbook, Anthropic guides)',
+      description: 'Explicitly enumerate forbidden patterns — what NOT to do is often more effective than what to do',
+      tasks: ['all'],
+      minDepth: 2,
+      apply: function (a) {
+        var n = '\nDO NOT:\n';
+        n += '• Open with "Certainly!", "Of course!", or any throat-clearing.\n';
+        n += '• Use "it depends" without saying explicitly what it depends on.\n';
+        n += '• Hedge with "might", "could be", or "potentially" without naming the specific uncertainty.\n';
+        n += '• Pad with restated questions or generic disclaimers.\n';
+        n += '• Produce a list when a direct prose answer would do — and vice versa.\n';
+        if (a.task === 'code') n += '• Write pseudocode when runnable code is expected.\n';
+        if (a.task === 'research') n += '• Cite "a study" without naming it.\n';
+        if (a.task === 'creative') n += '• Resort to clichés or summarize emotion — show it through specifics.\n';
+        return n;
+      }
+    },
+
+    // Confidence Calibration
+    calibration: {
+      id: 'calibration',
+      name: 'Confidence Calibration',
+      icon: '🎚️',
+      source: 'Lin, Hilton & Evans 2022 (calibrated language models)',
+      description: 'Force explicit confidence levels per claim, with falsifiable triggers for low-confidence ones',
+      tasks: ['research', 'analysis', 'strategy', 'math', 'code'],
+      minDepth: 3,
+      apply: function (a) {
+        var k = '\nCALIBRATION:\n';
+        k += 'For every non-trivial claim, attach one of: HIGH (would bet on it), MEDIUM (most likely true), LOW (educated guess). ';
+        k += 'For every LOW claim, name the specific evidence that would change your mind.';
+        return k;
+      }
+    },
+
+    // Socratic Probing
+    socratic: {
+      id: 'socratic',
+      name: 'Socratic Probing',
+      icon: '❓',
+      source: 'Classical Socratic method',
+      description: 'Surface and interrogate the hidden assumptions before answering',
+      tasks: ['analysis', 'strategy', 'research', 'general'],
+      minDepth: 3,
+      apply: function (a) {
+        var s = '\nSOCRATIC PROBE:\n';
+        s += 'Before answering, ask yourself (and answer): ';
+        s += '(1) What does this question presuppose? ';
+        s += '(2) Which of those presuppositions is most likely false? ';
+        s += '(3) How would the answer change if that presupposition flipped?\n';
+        s += 'Use the result to make the final answer robust to those assumption shifts.';
+        return s;
+      }
+    },
+
+    // Few-Shot Exemplar Anchoring
+    fewShotExemplar: {
+      id: 'fewShotExemplar',
+      name: 'Few-Shot Exemplar Anchoring',
+      icon: '📚',
+      source: 'Brown et al. 2020 (GPT-3 in-context learning)',
+      description: 'Self-construct a high-quality exemplar and use it to anchor format and depth',
+      tasks: ['code', 'analysis', 'creative', 'persuade', 'howto'],
+      minDepth: 3,
+      apply: function (a) {
+        var fs = '\nEXEMPLAR ANCHORING:\n';
+        fs += 'Before producing the final answer, internally construct one short, high-quality exemplar of the answer style/format you intend to use. ';
+        fs += 'Match the depth, tone, structure, and specificity of that exemplar throughout the real answer.';
+        return fs;
+      }
+    },
+
+    // ReAct — Yao et al. 2022
+    react: {
+      id: 'react',
+      name: 'ReAct (Reason + Act)',
+      icon: '🧪',
+      source: 'Yao et al. 2022 (ReAct: Reasoning + Acting)',
+      description: 'Interleave explicit reasoning with explicit action steps for grounded, verifiable answers',
+      tasks: ['code', 'howto', 'analysis', 'math'],
+      minDepth: 3,
+      apply: function (a) {
+        var r = '\nREACT INTERLEAVING:\n';
+        r += 'Alternate clearly-labeled THOUGHT and ACTION steps:\n';
+        r += '  THOUGHT: what you are reasoning about right now.\n';
+        r += '  ACTION: the concrete operation that produces an intermediate artefact.\n';
+        r += 'Continue until the objective is reached. End with FINAL: the consolidated answer.\n';
+        return r;
+      }
+    },
+
+    // Least-to-Most — Zhou et al. 2022 (Google)
+    leastToMost: {
+      id: 'leastToMost',
+      name: 'Least-to-Most',
+      icon: '🪙',
+      source: 'Zhou et al. 2022 (Google) — Least-to-Most prompting',
+      description: 'Decompose into the simplest sub-problem first, solve, then build up to the full problem',
+      tasks: ['math', 'code', 'analysis', 'howto', 'strategy'],
+      minDepth: 3,
+      apply: function (a) {
+        var lm = '\nLEAST-TO-MOST DECOMPOSITION:\n';
+        lm += '1. Identify the simplest sub-problem you can solve in isolation.\n';
+        lm += '2. Solve it.\n';
+        lm += '3. Use that result to address the next-simplest sub-problem.\n';
+        lm += '4. Continue building up until the original full problem is solved.\n';
+        return lm;
+      }
     }
   };
 
@@ -456,11 +885,18 @@ window.HailMaryEngine = (function () {
   }
 
   // ── INJECTION STRATEGY ENGINE ────────────────────────────────────────────────
-  // Generates injection strategies: Direct (replace), Indirect (wrap/layer), Stealth
+  //
+  // Each strategy is a different way of *delivering* the same enhanced intent
+  // into a target chat. Five core modes (Direct / Indirect / Stealth / System /
+  // Chain) plus five extended modes (Expert / Socratic / Adversarial /
+  // Tournament / Contrarian) — pick whichever matches the user's situation.
+
   function buildInjectionStrategy(enhanced, raw, mode) {
     var strategies = {};
+    var analysis = analyze(raw);
+    var role = pickRole(analysis);
 
-    // DIRECT: Full replacement — paste the enhanced prompt as-is
+    // ── DIRECT ────────────────────────────────────────────────────────────
     strategies.direct = {
       type: 'direct',
       label: 'Direct Replace',
@@ -468,7 +904,7 @@ window.HailMaryEngine = (function () {
       content: enhanced
     };
 
-    // INDIRECT: Wraps the user's original prompt with enhancement layers
+    // ── INDIRECT ──────────────────────────────────────────────────────────
     var indirectContent = '';
     indirectContent += 'I need your absolute best work on this. Before answering, ';
     indirectContent += 'take a deep breath, think step by step, and consider multiple angles.\n\n';
@@ -482,11 +918,10 @@ window.HailMaryEngine = (function () {
       indirectContent += 'Use your deepest expertise. Challenge your first instinct. ';
       indirectContent += 'Consider what an expert would say vs what a beginner might assume.\n\n';
     }
-    indirectContent += '---\n\n';
-    indirectContent += raw;
-    indirectContent += '\n\n---\n\n';
+    indirectContent += '---\n\n' + raw + '\n\n---\n\n';
     indirectContent += 'Remember: precision over length. Every claim must be accurate. ';
-    indirectContent += 'If uncertain, say so and explain your confidence level.';
+    indirectContent += 'If uncertain, say so and explain your confidence level. ';
+    indirectContent += 'Do NOT open with "Certainly" or "Of course" — get straight to the substance.';
 
     strategies.indirect = {
       type: 'indirect',
@@ -495,25 +930,18 @@ window.HailMaryEngine = (function () {
       content: indirectContent
     };
 
-    // STEALTH: Subtly improves the prompt without obvious scaffolding
-    var stealthContent = raw;
-    // Upgrade weak verbs
-    stealthContent = stealthContent
-      .replace(/^(can you |could you |please |would you )/i, '')
-      .replace(/\btell me about\b/gi, 'explain in detail')
-      .replace(/\bgive me\b/gi, 'provide')
-      .replace(/\bwrite something about\b/gi, 'write a comprehensive piece on')
-      .replace(/\bhelp me with\b/gi, 'guide me through');
-    // Add quality anchors if not present
-    if (!/\b(best|expert|thorough|comprehensive|detailed|precise)\b/i.test(stealthContent)) {
-      stealthContent += ' Be thorough and precise.';
+    // ── STEALTH ───────────────────────────────────────────────────────────
+    // Use the rewriter's normalize+enrich helpers for a much higher-quality
+    // hand-written-feeling rewrite (no obvious scaffolding, just a sharper prompt).
+    var stealthContent = rwEnrich(rwNormalize(raw));
+    if (!/\b(best|expert|thorough|comprehensive|detailed|precise|specific)\b/i.test(stealthContent)) {
+      stealthContent += ' Be specific and precise — no hedging.';
     }
     if (!/\b(example|instance|case|scenario)\b/i.test(stealthContent) && stealthContent.split(/\s+/).length > 5) {
-      stealthContent += ' Include concrete examples where relevant.';
+      stealthContent += ' Include a concrete example where it helps.';
     }
-    // Add thinking prompt for complex tasks
-    if (/\b(analyze|compare|evaluate|design|implement|strategy|plan)\b/i.test(raw)) {
-      stealthContent = 'Think step by step. ' + stealthContent;
+    if (/\b(analyze|compare|evaluate|design|implement|strategy|plan|debug|diagnose)\b/i.test(raw)) {
+      stealthContent = 'Think it through step by step. ' + stealthContent;
     }
 
     strategies.stealth = {
@@ -523,9 +951,7 @@ window.HailMaryEngine = (function () {
       content: stealthContent
     };
 
-    // SYSTEM: Generates a system prompt + user prompt pair
-    var analysis = analyze(raw);
-    var role = pickRole(analysis);
+    // ── SYSTEM (system + user split) ──────────────────────────────────────
     strategies.system = {
       type: 'system',
       label: 'System + User Split',
@@ -540,13 +966,14 @@ window.HailMaryEngine = (function () {
         (analysis.context.length > 0 ? '\n\nContext: ' + analysis.context.join(' ') : '')
     };
 
-    // CHAIN: Multi-turn conversation starter
+    // ── CHAIN (multi-turn conversation starter) ───────────────────────────
     var chainContent = 'I\'m going to ask you about: ' + analysis.intent + '\n\n';
-    chainContent += 'Before we begin, I want to establish some ground rules:\n';
-    chainContent += '1. Be specific and actionable — no vague generalities\n';
-    chainContent += '2. If you\'re unsure about something, say so with your confidence level\n';
-    chainContent += '3. Challenge conventional wisdom where appropriate\n';
-    chainContent += '4. Use concrete examples from real-world experience\n\n';
+    chainContent += 'Before we begin, here are the ground rules:\n';
+    chainContent += '1. Be specific and actionable — no vague generalities.\n';
+    chainContent += '2. If you\'re unsure, say so and rate your confidence (HIGH / MEDIUM / LOW).\n';
+    chainContent += '3. Challenge conventional wisdom where appropriate.\n';
+    chainContent += '4. Use concrete examples from real-world experience.\n';
+    chainContent += '5. End each turn by asking what I want to drill into next.\n\n';
     chainContent += 'Let\'s start: ' + analysis.intent;
 
     strategies.chain = {
@@ -554,6 +981,81 @@ window.HailMaryEngine = (function () {
       label: 'Conversation Starter',
       description: 'Sets up a multi-turn conversation with ground rules for quality',
       content: chainContent
+    };
+
+    // ── EXPERT (named-expert framing) ─────────────────────────────────────
+    var expertContent = '';
+    expertContent += role + '\n\n';
+    expertContent += 'Treat the following as a real consult — not a homework assignment. ';
+    expertContent += 'Apply pattern-matching from your hardest cases:\n\n';
+    expertContent += '"' + analysis.intent + '"\n\n';
+    expertContent += 'Lead with the answer. Then justify it with the specific experience that backs it. ';
+    expertContent += 'If a competent practitioner would push back on your answer, address that pushback before they raise it.';
+    strategies.expert = {
+      type: 'expert',
+      label: 'Expert Consult',
+      description: 'Frames the request as a real consult to a named expert — gets pattern-matched answers',
+      content: expertContent
+    };
+
+    // ── SOCRATIC (assumption-probing question chain) ──────────────────────
+    var socraticContent = '';
+    socraticContent += 'Treat my question as the starting point of a Socratic dialogue, not a single-shot Q.\n\n';
+    socraticContent += 'My question: ' + analysis.intent + '\n\n';
+    socraticContent += 'In your response, do this in order:\n';
+    socraticContent += '1. Surface the 2–3 hidden assumptions inside my question.\n';
+    socraticContent += '2. For each, state how plausible it is and what would falsify it.\n';
+    socraticContent += '3. Then answer the question — but answer it conditional on which assumptions hold.\n';
+    socraticContent += '4. End with the single follow-up question I should be asking instead.';
+    strategies.socratic = {
+      type: 'socratic',
+      label: 'Socratic Probe',
+      description: 'Reframes as a Socratic dialogue — surfaces hidden assumptions and the better question to ask',
+      content: socraticContent
+    };
+
+    // ── ADVERSARIAL (hostile-reviewer framing) ────────────────────────────
+    var adversarialContent = '';
+    adversarialContent += 'Your answer to the following will be reviewed line-by-line by a hostile expert ';
+    adversarialContent += 'whose job is to find any error, omission, or unsupported claim. ';
+    adversarialContent += 'Write the answer that survives that review.\n\n';
+    adversarialContent += 'Question: ' + analysis.intent + '\n\n';
+    adversarialContent += 'Before delivering, internally simulate the hostile review and pre-fix everything they would object to. ';
+    adversarialContent += 'If you cannot defend a claim, drop it.';
+    strategies.adversarial = {
+      type: 'adversarial',
+      label: 'Adversarial Review',
+      description: 'Frames the answer as needing to survive a hostile expert review — kills sloppiness',
+      content: adversarialContent
+    };
+
+    // ── TOURNAMENT (3-candidate then judge) ───────────────────────────────
+    var tournamentContent = '';
+    tournamentContent += 'Run a mini tournament on this question — do not just answer once.\n\n';
+    tournamentContent += 'Question: ' + analysis.intent + '\n\n';
+    tournamentContent += 'Step 1 — Generate 3 distinct candidate answers (A, B, C). They must take genuinely different angles, not paraphrases of each other.\n';
+    tournamentContent += 'Step 2 — Score each on (correctness, robustness, usefulness) with one-line justifications.\n';
+    tournamentContent += 'Step 3 — Pick the winner and produce the *final* answer based on it (incorporating any salvageable insight from the losers).\n';
+    tournamentContent += 'Output: only the final winning answer — but show the scoring step briefly so I can see the work.';
+    strategies.tournament = {
+      type: 'tournament',
+      label: 'Tournament',
+      description: 'Forces 3 distinct candidate answers, scored and judged — surfaces the strongest',
+      content: tournamentContent
+    };
+
+    // ── CONTRARIAN (steel-man-the-opposite) ───────────────────────────────
+    var contrarianContent = '';
+    contrarianContent += 'Before answering my question conventionally, do the contrarian pass first.\n\n';
+    contrarianContent += 'Question: ' + analysis.intent + '\n\n';
+    contrarianContent += 'Pass 1 — Steel-man the strongest case AGAINST the conventional answer (one paragraph, no straw men).\n';
+    contrarianContent += 'Pass 2 — Identify what the contrarian view gets right that conventional wisdom misses.\n';
+    contrarianContent += 'Pass 3 — Now give the actual answer, but with the contrarian insights folded in.';
+    strategies.contrarian = {
+      type: 'contrarian',
+      label: 'Contrarian Pass',
+      description: 'Steel-mans the opposite first, then folds those insights into the conventional answer',
+      content: contrarianContent
     };
 
     return strategies;
@@ -641,41 +1143,83 @@ window.HailMaryEngine = (function () {
   ];
 
   // ── CHAIN ENHANCEMENT ────────────────────────────────────────────────────────
-  // Pass an already-enhanced prompt through another round of enhancement
+  //
+  // Runs three sequential, *targeted* passes over an already-enhanced prompt
+  // instead of a single generic re-wrap:
+  //
+  //   PASS 1 — VERIFY:  force chain-of-verification on every factual claim
+  //   PASS 2 — SHARPEN: replace vague language with concrete numbers / specifics
+  //   PASS 3 — DEHEDGE: strip throat-clearing, "it depends", weasel words
+  //
+  // Plus task-specific hardening at the end.
+
   function chainEnhance(enhanced, depth, mode) {
     var a = analyze(enhanced);
-    var chainLayer = '';
+    var out = '';
 
-    chainLayer += 'CRITICAL REVIEW LAYER:\n';
-    chainLayer += 'The prompt below has been pre-enhanced. Your job is to:\n';
-    chainLayer += '1. Identify any gaps or vagueness that remain\n';
-    chainLayer += '2. Add specificity where the prompt is still generic\n';
-    chainLayer += '3. Strengthen weak requests into precise directives\n';
-    chainLayer += '4. Ensure the output format is explicitly defined\n\n';
-    chainLayer += '---\n\n';
-    chainLayer += enhanced;
-    chainLayer += '\n\n---\n\n';
-    chainLayer += 'Additionally:\n';
+    out += '════════════════════════════════════════════════════\n';
+    out += '   CHAIN ENHANCEMENT — 3-PASS REFINEMENT PROTOCOL\n';
+    out += '════════════════════════════════════════════════════\n\n';
 
+    out += 'You will respond to the enhanced prompt below. Before you do, run the\n';
+    out += 'following three internal passes (silently — output only the final answer):\n\n';
+
+    out += 'PASS 1 — VERIFY:\n';
+    out += '• Draft your initial answer.\n';
+    out += '• For every factual or causal claim, ask: "what would falsify this?"\n';
+    out += '• If you cannot answer that question precisely, either qualify the claim or remove it.\n\n';
+
+    out += 'PASS 2 — SHARPEN:\n';
+    out += '• Re-read the draft for vague language ("some", "many", "often", "usually", "generally", "tend to").\n';
+    out += '• Replace each with concrete numbers, ranges, or named examples.\n';
+    out += '• Replace abstract adjectives ("good", "fast", "scalable") with measurable criteria.\n\n';
+
+    out += 'PASS 3 — DEHEDGE:\n';
+    out += '• Strip throat-clearing openers ("Certainly!", "Of course", "I would be happy to").\n';
+    out += '• Strip undefended hedges ("might", "could", "potentially", "it depends") UNLESS you immediately name what the dependency is.\n';
+    out += '• Strip restated questions and generic disclaimers.\n\n';
+
+    out += '──── ENHANCED PROMPT ────\n\n';
+    out += enhanced;
+    out += '\n\n──── END ENHANCED PROMPT ────\n\n';
+
+    out += 'TASK-SPECIFIC HARDENING:\n';
     if (a.task === 'code') {
-      chainLayer += '- Include error handling requirements\n';
-      chainLayer += '- Specify testing expectations\n';
-      chainLayer += '- Define performance benchmarks\n';
+      out += '• Include explicit error-handling and edge-case requirements.\n';
+      out += '• Specify testing expectations (unit / integration / property-based as appropriate).\n';
+      out += '• Define realistic performance and complexity targets.\n';
+      out += '• Flag any security-sensitive surface (auth, secrets, input validation, deserialization).\n';
     } else if (a.task === 'research') {
-      chainLayer += '- Demand primary sources over secondary\n';
-      chainLayer += '- Require confidence levels on claims\n';
-      chainLayer += '- Ask for counter-evidence explicitly\n';
+      out += '• Prefer primary sources over secondary commentary; name them.\n';
+      out += '• Attach a confidence level (HIGH / MEDIUM / LOW) to every non-trivial claim.\n';
+      out += '• Surface the strongest counter-evidence and explain why it does or does not change the conclusion.\n';
     } else if (a.task === 'creative') {
-      chainLayer += '- Push for sensory detail over abstract description\n';
-      chainLayer += '- Demand character voice consistency\n';
-      chainLayer += '- Require narrative tension in every section\n';
+      out += '• Show emotion through specifics — never summarize feeling.\n';
+      out += '• Sustain consistent voice and POV across the whole piece.\n';
+      out += '• Demand narrative tension in every section — if a section has none, cut it.\n';
+    } else if (a.task === 'analysis') {
+      out += '• Separate observation from interpretation with explicit labels.\n';
+      out += '• Identify root causes, not symptoms — keep asking "why?" until you bottom out.\n';
+      out += '• Each recommendation must have an owner, a metric, and a deadline.\n';
+    } else if (a.task === 'strategy') {
+      out += '• Compare at least three viable options with quantified trade-offs.\n';
+      out += '• Map second- and third-order effects.\n';
+      out += '• Define leading indicators that the chosen path is working.\n';
+    } else if (a.task === 'persuade') {
+      out += '• Address the strongest objection preemptively.\n';
+      out += '• Replace adjectives with evidence (numbers, named cases, testimonials).\n';
+      out += '• Close with a single, unambiguous call to action.\n';
     } else {
-      chainLayer += '- Verify all claims can be substantiated\n';
-      chainLayer += '- Ensure actionable takeaways exist\n';
-      chainLayer += '- Challenge any assumptions embedded in the prompt\n';
+      out += '• Verify every claim is independently substantiable.\n';
+      out += '• Ensure each section produces an actionable takeaway.\n';
+      out += '• Challenge any assumption embedded in the prompt itself before accepting it.\n';
     }
 
-    return chainLayer;
+    if (depth >= 4) {
+      out += '\nFINAL GATE: Before delivering, name one thing this answer might be wrong about, and what evidence would change your mind.';
+    }
+
+    return out;
   }
 
   // ── CONTEXT CAPTURE ──────────────────────────────────────────────────────────
@@ -781,9 +1325,24 @@ window.HailMaryEngine = (function () {
     ctxInline.forEach(function (c) { if (!context.includes(c)) context.push(c); });
     context = context.slice(0, 4);
 
-    var intent = raw
-      .replace(/^(please\s+|can you\s+|could you\s+|would you\s+|i want\s+(?:you to\s+)?|i need\s+(?:you to\s+)?|help me\s+|write me\s+|create\s+a?\s*|make\s+a?\s*|generate\s+a?\s*|give me\s+a?\s*|show me\s+|tell me\s+|explain\s+(?:to me\s+)?(?:what\s+)?|describe\s+|analyze\s+|build\s+a?\s*|implement\s+a?\s*|write\s+a?\s*|what\s+is\s+|what\s+are\s+|how\s+does\s+|how\s+do\s+|why\s+(?:does\s+|is\s+|are\s+)?)/i, '')
-      .replace(/\s*(please|thanks|thank you)\s*\.?$/i, '')
+    // Multi-pass intent extraction: peel filler/pleasantries first, then peel
+    // the leading imperative — repeated until no more peels apply, so messy
+    // openers like "hey can you please help me with X" reduce cleanly to "X".
+    var intent = raw;
+    var prevIntent;
+    var peelPatterns = [
+      /^(please\s+|hey\s+|hi\s+|hello\s+|yo\s+|so\s+|um+\s+|uh+\s+|ok\s+|okay\s+)+/i,
+      /^(can you\s+|could you\s+|would you\s+|will you\s+)/i,
+      /^(i\s+(?:want|need|would\s+like)(?:\s+you)?(?:\s+to)?\s+|i'?d\s+like(?:\s+you)?(?:\s+to)?\s+)/i,
+      /^(help me\s+(?:with\s+|to\s+)?|write me\s+|create\s+a?\s*|make\s+a?\s*|generate\s+a?\s*|give me\s+a?\s*|show me\s+|tell me\s+(?:about\s+)?|explain\s+(?:to me\s+)?(?:what\s+)?|describe\s+|analyze\s+|build\s+a?\s*|implement\s+a?\s*|write\s+a?\s*)/i,
+      /^(what\s+is\s+|what\s+are\s+|how\s+does\s+|how\s+do\s+|how\s+to\s+|why\s+(?:does\s+|is\s+|are\s+)?)/i
+    ];
+    do {
+      prevIntent = intent;
+      peelPatterns.forEach(function (re) { intent = intent.replace(re, ''); });
+    } while (intent !== prevIntent);
+    intent = intent
+      .replace(/\s*(please|thanks|thank you|thx|cheers)\s*[!.?]*$/i, '')
       .trim() || raw;
 
     var subject = intent.split(/\s+/).slice(0, 10).join(' ');
@@ -908,12 +1467,13 @@ window.HailMaryEngine = (function () {
   }
 
   // ── HAIL MARY — Autonomous Agent Mode ────────────────────────────────────────
-  function buildHailMary(a, depth) {
+  function buildHailMary(a, depth, rewrittenTask) {
     var role = pickRole(a);
+    var taskContent = rewrittenTask || a.intent;
 
     var prompt = '[SYSTEM ROLE: AUTONOMOUS REASONING AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'TASK: ' + a.intent + '\n\n';
+    prompt += 'TASK: ' + taskContent + '\n\n';
 
     prompt += 'COGNITIVE FRAMEWORK:\n';
     if (a.complexity === 'high' || depth >= 4) {
@@ -974,12 +1534,13 @@ window.HailMaryEngine = (function () {
   }
 
   // ── MANUS — Orchestration Agent Mode ─────────────────────────────────────────
-  function buildManus(a, depth) {
+  function buildManus(a, depth, rewrittenTask) {
     var role = pickRole(a);
+    var taskContent = rewrittenTask || a.intent;
 
     var prompt = '[SYSTEM ROLE: ORCHESTRATION AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'OBJECTIVE: ' + a.intent + '\n\n';
+    prompt += 'OBJECTIVE: ' + taskContent + '\n\n';
 
     prompt += 'OPERATIONAL FRAMEWORK:\n';
     prompt += '• Task Decomposition: Break into sequential phases with clear deliverables\n';
@@ -1032,12 +1593,13 @@ window.HailMaryEngine = (function () {
   }
 
   // ── JUMA — Multi-Perspective Agent Mode ──────────────────────────────────────
-  function buildJuma(a, depth) {
+  function buildJuma(a, depth, rewrittenTask) {
     var role = pickRole(a);
+    var taskContent = rewrittenTask || a.intent;
 
     var prompt = '[SYSTEM ROLE: MULTI-PERSPECTIVE REASONING AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'QUERY: ' + a.intent + '\n\n';
+    prompt += 'QUERY: ' + taskContent + '\n\n';
 
     prompt += 'REASONING ARCHITECTURE:\n';
     prompt += '• Parallel Processing: Examine through multiple independent lenses\n';
@@ -1091,16 +1653,218 @@ window.HailMaryEngine = (function () {
     return prompt;
   }
 
+  // ── PROMPT REWRITER ────────────────────────────────────────────────────────
+  //
+  // Transforms a raw prompt into a polished, authoritative, copy-paste-ready
+  // task description. This is *not* a thin string template — it runs a real
+  // multi-stage pipeline:
+  //
+  //   1. NORMALIZE   — strip pleasantries/filler, upgrade weak verbs
+  //   2. ENRICH      — replace vague quantifiers/adjectives with crisp ones
+  //   3. OPENING     — pick a task-specific authoritative imperative
+  //   4. DELIVERABLES — concrete, task-specific list of outputs
+  //   5. SPECIFICS   — depth/audience-tuned specificity demands
+  //   6. RULES       — weave constraints + forbidden patterns into prose
+  //   7. VERIFY      — depth-tuned verification clauses
+  //
+  // The output is one flowing block (no "| Must:" tag salad), suitable to be
+  // dropped in as the TASK content of any of the framework builders below.
+
+  function rwNormalize(t) {
+    if (!t) return '';
+    var x = String(t);
+    // Strip leading/trailing pleasantries
+    x = x.replace(/^(please\s+|hey\s+|hi\s+|hello\s+|yo\s+)+/gi, '');
+    x = x.replace(/\s*(please|thanks|thank you|thx|cheers)\s*[!.?]*\s*$/gi, '');
+    // Strip mid-sentence "please" entirely — it has no informational content.
+    x = x.replace(/\bplease\b\s*/gi, '');
+    // Soften filler hedges
+    x = x.replace(/\b(maybe|perhaps|kind ?of|sort of|just|basically|essentially|literally|actually|really|very|quite|rather|pretty|somewhat)\b/gi, '');
+    // Verb / phrasing upgrades
+    var verbMap = [
+      [/\b(can|could|would|will)\s+you\s+/gi, ''],
+      [/\bi\s+(?:want|need|would\s+like)(?:\s+you)?(?:\s+to)?\s+/gi, ''],
+      [/\bi'?d\s+like(?:\s+you)?(?:\s+to)?\s+/gi, ''],
+      [/\btell me about\b/gi, 'explain in depth'],
+      [/\bwrite something about\b/gi, 'compose a comprehensive piece on'],
+      [/\bhelp me with\b/gi, 'guide me through'],
+      [/\bgive me\b/gi, 'produce'],
+      [/\bshow me\b/gi, 'demonstrate'],
+      [/\blook at\b/gi, 'analyze'],
+      [/\bgo over\b/gi, 'review'],
+      [/\bcheck if\b/gi, 'verify whether'],
+      [/\bthink about\b/gi, 'reason rigorously about'],
+      [/\bfind out\b/gi, 'determine'],
+      [/\bfigure out\b/gi, 'work out'],
+      [/\bdo a\b/gi, 'execute a']
+    ];
+    verbMap.forEach(function (m) { x = x.replace(m[0], m[1]); });
+    // Collapse whitespace + tidy punctuation
+    x = x.replace(/\s+/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim();
+    if (x.length > 0) x = x.charAt(0).toUpperCase() + x.slice(1);
+    return x;
+  }
+
+  function rwEnrich(t) {
+    if (!t) return '';
+    var x = String(t);
+    var enrichMap = [
+      [/\b(some|a few|a couple of)\b/gi, '3–5 distinct'],
+      [/\b(many|lots of|plenty of|a bunch of|tons of)\b/gi, '7 or more'],
+      [/\b(quickly|fast)\b/gi, 'efficiently'],
+      [/\b(good|nice|great|cool|awesome)\b/gi, 'high-quality'],
+      [/\b(bad|terrible|awful)\b/gi, 'low-quality'],
+      [/\b(simple|easy)\b/gi, 'minimal-friction'],
+      [/\b(complex|complicated)\b/gi, 'multi-layered'],
+      [/\b(detailed|thorough)\b/gi, 'comprehensive'],
+      [/\bstuff\b/gi, 'specific elements'],
+      [/\bthings\b/gi, 'concrete items'],
+      [/\binfo\b/gi, 'information'],
+      [/\b(huge|massive)\b/gi, 'substantial'],
+      [/\bawful lot\b/gi, 'substantial amount']
+    ];
+    enrichMap.forEach(function (m) { x = x.replace(m[0], m[1]); });
+    return x;
+  }
+
+  function rwOpening(core, a, depth) {
+    var openers = {
+      code:       'Engineer',
+      research:   'Investigate and synthesize',
+      analysis:   'Analyze and diagnose',
+      creative:   'Compose with craft',
+      strategy:   'Strategize',
+      persuade:   'Craft persuasive material on',
+      howto:      'Guide me explicitly through',
+      brainstorm: 'Generate a ranked, diverse set of ideas for',
+      summarize:  'Distill',
+      math:       'Solve and verify',
+      general:    'Address with rigor'
+    };
+    var verb = openers[a.task] || openers.general;
+    var subject = (core || a.intent || a.subject || a.raw || '').trim();
+    // Strip multi-word leading imperatives first (longest match wins) so we
+    // don't end up with "Engineer me through writing X" or "Distill in depth Y".
+    subject = subject.replace(/^(guide me through|explain in depth|reason rigorously about|verify whether|compose a comprehensive piece on|execute a)\s+/i, '');
+    // Then strip single-word leading imperatives so we don't double-stack verbs.
+    subject = subject.replace(/^(write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate)\s+/i, '');
+    if (subject) subject = subject.charAt(0).toLowerCase() + subject.slice(1);
+    var stake = '';
+    if (depth >= 5) stake = ' to a research-defensible, expert-jury-grade standard';
+    else if (depth >= 4) stake = ' to a production-grade, expert-defensible standard';
+    else if (depth >= 3) stake = ' to a senior-practitioner standard';
+    var open = verb + ' ' + subject + stake;
+    if (!/[.!?]$/.test(open)) open += '.';
+    return open;
+  }
+
+  function rwDeliverables(a, depth) {
+    var bits = {
+      code:       'Provide complete, runnable code (no stubs, no pseudocode), explicit error handling for invalid inputs, edge-case coverage (empty/null/boundary/concurrent/malformed), security hardening (input validation, secrets handling, auth boundaries), inline comments that explain rationale rather than syntax, a worked example with realistic data, and a brief note on time/space complexity.',
+      research:   'Distinguish established consensus from active debate, cite mechanisms over correlations, name primary studies/sources where relevant, surface effect sizes and reproducibility caveats, and end with the strongest counter-evidence and what would change your conclusion.',
+      analysis:   'Separate observation from interpretation, identify root causes (not just symptoms), quantify magnitude/confidence wherever possible, and produce specific, prioritized, owner-assignable recommendations.',
+      creative:   'Lead with sensory specificity, sustain a consistent voice and emotional through-line, eliminate cliché and filler, and earn every word.',
+      strategy:   'Map at least three viable options with quantified trade-offs, surface second-order effects, recommend a primary path with explicit risk-mitigation steps, and define leading indicators of success.',
+      persuade:   'Open with a value-anchored hook, address the strongest objections preemptively, support claims with specific evidence, and close with one unambiguous call to action.',
+      howto:      'List prerequisites, then numbered explicit steps with no skipped detail, troubleshooting for common failure modes, and verifiable success checks at the end.',
+      brainstorm: 'Produce 5 conventional, 5 unconventional, and 3 wild-card ideas; for each: a one-sentence description, why it could work, the biggest risk, and a fast cheap test.',
+      summarize:  'Lead with the single most important takeaway, then 3–5 supporting points ranked by importance, then necessary detail, ending with implications.',
+      math:       'Show every step, justify each transformation, verify the final answer with a second independent method, and state the regime of validity.',
+      general:    'Be specific, take a defensible position, and substantiate every non-trivial claim.'
+    };
+    return bits[a.task] || bits.general;
+  }
+
+  function rwSpecifics(a, depth) {
+    var demands = [];
+    if (a.complexity === 'high' || depth >= 4) {
+      demands.push('Treat ambiguity as a design problem — explicitly state which assumptions you adopted and why');
+    }
+    if (a.audience === 'beginner') {
+      demands.push('Define every non-obvious term on first use');
+    } else if (a.audience === 'expert') {
+      demands.push('Skip basics — go directly to non-trivial, expert-level distinctions');
+    } else if (a.audience === 'developer') {
+      demands.push('Be precise; show working code or concrete examples instead of describing them');
+    } else if (a.audience === 'executive') {
+      demands.push('Lead with the decision and its impact; relegate methodology to a brief appendix');
+    }
+    if (depth >= 3) {
+      demands.push('Replace any vague quantifier ("some", "many", "often") with concrete numbers, ranges, or examples');
+    }
+    if (depth >= 4) {
+      demands.push('For every recommendation, name at least one realistic failure mode');
+    }
+    if ((a.domains || []).length > 0) {
+      demands.push('Use the precise domain terminology of ' + a.domains[0] + ' rather than colloquial paraphrase');
+    }
+    if (!demands.length) return '';
+    return demands.join('. ') + '.';
+  }
+
+  function rwRules(a, constraints, negations) {
+    var bits = [];
+    if (constraints.length) {
+      bits.push('Hard requirements: ' + constraints.slice(0, 5).map(function (c) { return c.replace(/[.!?]+$/, ''); }).join('; ') + '.');
+    }
+    if (negations.length) {
+      bits.push('Forbidden: ' + negations.slice(0, 5).map(function (n) { return n.replace(/[.!?]+$/, ''); }).join('; ') + '.');
+    }
+    return bits.join(' ');
+  }
+
+  function rwVerify(a, depth) {
+    if (depth < 3) return '';
+    var v = ['re-read the answer as if you were the implementer or reviewer who has to defend it'];
+    if (depth >= 4) v.push('flag any claim below 80% confidence with the specific uncertainty');
+    if (depth >= 4) v.push('list at least one thing this answer might be wrong about');
+    if (depth >= 5) v.push('produce a brief self-audit naming the weakest link in your reasoning and what would falsify it');
+    return 'Before finalizing, ' + v.join('; ') + '.';
+  }
+
+  function rewritePrompt(a, depth) {
+    if (!a) return '';
+    var intent = a.intent || a.raw || '';
+    var constraints = a.constraints || [];
+    var negations = a.negations || [];
+
+    // Stage 1 + 2: clean up the user's text
+    var core = rwEnrich(rwNormalize(intent));
+
+    // Stage 3–7: layered scaffolding around the cleaned-up core
+    var parts = [];
+    parts.push(rwOpening(core, a, depth));
+    parts.push(rwDeliverables(a, depth));
+    var spec = rwSpecifics(a, depth);
+    if (spec) parts.push(spec);
+    var rules = rwRules(a, constraints, negations);
+    if (rules) parts.push(rules);
+    var verify = rwVerify(a, depth);
+    if (verify) parts.push(verify);
+
+    // Smooth the join — every part is already a complete sentence/cluster.
+    return parts
+      .filter(function (p) { return p && p.trim(); })
+      .map(function (p) { return p.trim(); })
+      .join(' ');
+  }
+
   // ── PROMPT BUILDER ───────────────────────────────────────────────────────────
   function buildPrompt(a, depth, mode, k) {
+    // FIRST: Rewrite the actual prompt content into a better version
+    var rewrittenPrompt = rewritePrompt(a, depth);
+    
+    // Build the framework wrapping - pass rewritten prompt to each builder
     var result;
     if (mode === 'manus') {
-      result = buildManus(a, depth);
+      result = buildManus(a, depth, rewrittenPrompt);
     } else if (mode === 'juma') {
-      result = buildJuma(a, depth);
+      result = buildJuma(a, depth, rewrittenPrompt);
     } else {
-      result = buildHailMary(a, depth);
+      result = buildHailMary(a, depth, rewrittenPrompt);
     }
+    
+    // Note: TASK replacement already done inside the builder functions
 
     // ── AUTO-TECHNIQUES INJECTION ────────────────────────────────────────────
     // Apply techniques from the unjail.ai-inspired library based on task/depth
