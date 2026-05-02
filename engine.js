@@ -495,24 +495,15 @@ window.HailMaryEngine = (function () {
       content: indirectContent
     };
 
-    // STEALTH: Subtly improves the prompt without obvious scaffolding
-    var stealthContent = raw;
-    // Upgrade weak verbs
-    stealthContent = stealthContent
-      .replace(/^(can you |could you |please |would you )/i, '')
-      .replace(/\btell me about\b/gi, 'explain in detail')
-      .replace(/\bgive me\b/gi, 'provide')
-      .replace(/\bwrite something about\b/gi, 'write a comprehensive piece on')
-      .replace(/\bhelp me with\b/gi, 'guide me through');
-    // Add quality anchors if not present
-    if (!/\b(best|expert|thorough|comprehensive|detailed|precise)\b/i.test(stealthContent)) {
-      stealthContent += ' Be thorough and precise.';
-    }
-    if (!/\b(example|instance|case|scenario)\b/i.test(stealthContent) && stealthContent.split(/\s+/).length > 5) {
-      stealthContent += ' Include concrete examples where relevant.';
-    }
-    // Add thinking prompt for complex tasks
-    if (/\b(analyze|compare|evaluate|design|implement|strategy|plan)\b/i.test(raw)) {
+    // STEALTH: Subtly improves the prompt — reads like a skilled human wrote it
+    var stealthAnalysis = analyze(raw);
+    var stealthRewrite = rewriteIntent(stealthAnalysis, 3);
+    // Strip any scaffolding markers to keep it natural
+    var stealthContent = stealthRewrite
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    // Prepend a thinking nudge for complex tasks without looking like a framework
+    if (/\b(analyze|compare|evaluate|design|implement|strategy|plan|debug|architect)\b/i.test(raw)) {
       stealthContent = 'Think step by step. ' + stealthContent;
     }
 
@@ -526,6 +517,7 @@ window.HailMaryEngine = (function () {
     // SYSTEM: Generates a system prompt + user prompt pair
     var analysis = analyze(raw);
     var role = pickRole(analysis);
+    var systemRewrite = rewriteIntent(analysis, 4);
     strategies.system = {
       type: 'system',
       label: 'System + User Split',
@@ -535,19 +527,19 @@ window.HailMaryEngine = (function () {
         (analysis.tone ? 'Tone: ' + analysis.tone + '. ' : '') +
         (analysis.audience ? 'Audience: ' + analysis.audience + '. ' : '') +
         buildFormatDirective(analysis),
-      userPrompt: analysis.intent +
-        (analysis.constraints.length > 0 ? '\n\nConstraints: ' + analysis.constraints.join('; ') : '') +
+      userPrompt: systemRewrite +
         (analysis.context.length > 0 ? '\n\nContext: ' + analysis.context.join(' ') : '')
     };
 
     // CHAIN: Multi-turn conversation starter
-    var chainContent = 'I\'m going to ask you about: ' + analysis.intent + '\n\n';
+    var chainRewrite = rewriteIntent(analysis, 3);
+    var chainContent = 'I\'m going to ask you about: ' + chainRewrite.split('\n')[0] + '\n\n';
     chainContent += 'Before we begin, I want to establish some ground rules:\n';
     chainContent += '1. Be specific and actionable — no vague generalities\n';
     chainContent += '2. If you\'re unsure about something, say so with your confidence level\n';
     chainContent += '3. Challenge conventional wisdom where appropriate\n';
     chainContent += '4. Use concrete examples from real-world experience\n\n';
-    chainContent += 'Let\'s start: ' + analysis.intent;
+    chainContent += 'Let\'s start: ' + chainRewrite.split('\n')[0];
 
     strategies.chain = {
       type: 'chain',
@@ -697,7 +689,7 @@ window.HailMaryEngine = (function () {
     var sents = raw.split(/[.!?]+/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 3; });
 
     var taskMap = {
-      code:       /\b(code|function|class|implement|build|refactor|debug|script|api|algorithm|program|sql|python|javascript|typescript|react|vue|css|html|backend|frontend|database|endpoint|component|deploy|docker|git|rust|go|java|c\+\+|swift|kotlin|ruby|php|laravel|django|flask|express|nextjs|nuxt|svelte|angular)\b/gi,
+      code:       /\b(code|function|class|implement|build|refactor|debug|bug|fix|error|crash|script|api|algorithm|program|sql|python|javascript|typescript|react|vue|css|html|backend|frontend|database|endpoint|component|deploy|docker|git|rust|go|java|c\+\+|swift|kotlin|ruby|php|laravel|django|flask|express|nextjs|nuxt|svelte|angular|login|auth|module|server|client|middleware|route|schema|migration|test|lint|webpack|vite)\b/gi,
       research:   /\b(explain|why|how does|what is|what are|history|theory|study|literature|evidence|understand|meaning|define|overview|research|describe|elaborate|clarify|mechanism|origin|background|paper|journal|peer.?reviewed|meta.?analysis)\b/gi,
       creative:   /\b(write|story|poem|essay|blog|creative|imagine|narrative|fiction|draft|article|caption|slogan|lyrics|script|novel|character|plot|scene|dialogue|worldbuild|fantasy|sci.?fi|romance|thriller|horror)\b/gi,
       math:       /\b(calculate|solve|equation|formula|proof|derive|compute|integral|derivative|probability|statistics|optimization|matrix|algebra|calculus|theorem|lemma)\b/gi,
@@ -868,21 +860,11 @@ window.HailMaryEngine = (function () {
   }
 
   function buildContextBlock(a) {
+    // Only include user background context here.
+    // Constraints, negations, audience, and tone are now handled by rewriteIntent()
+    // and would be duplicated if included here as well.
     var parts = [];
     if (a.context.length > 0) parts.push('Context: ' + a.context.join(' '));
-    if (a.constraints.length > 0) parts.push('Requirements: ' + a.constraints.join('; '));
-    if (a.negations.length > 0) parts.push('Avoid: ' + a.negations.join('; '));
-    if (a.audience) {
-      var audDesc = {
-        beginner: 'Audience is a beginner — define terms, use analogies, build from first principles',
-        expert: 'Audience is an expert — skip basics, use precise terminology, go deep',
-        developer: 'Audience is a developer — be precise, show working code',
-        executive: 'Audience is an executive — lead with impact and decisions',
-        student: 'Audience is a student — build understanding progressively, check comprehension'
-      };
-      parts.push(audDesc[a.audience] || ('Audience: ' + a.audience));
-    }
-    if (a.tone) parts.push('Tone: ' + a.tone);
     return parts.join('\n');
   }
 
@@ -907,13 +889,326 @@ window.HailMaryEngine = (function () {
     return taskFmt[a.task] || 'Lead with the direct answer.';
   }
 
+  // ── INTENT REWRITER ──────────────────────────────────────────────────────────
+  // Actually rewrites the user's prompt into a more specific, detailed, actionable version.
+  // This is the core differentiator: instead of passing the user's words through unchanged,
+  // we transform them into a genuinely better prompt.
+  function rewriteIntent(a, depth) {
+    var raw = a.raw;
+    var intent = a.intent;
+    var subject = a.subject;
+    var task = a.task;
+    var wc = a.wc;
+
+    // ── Step 1: Build a strong, task-appropriate opening sentence ──
+    // The analyzer already strips action verbs (write, explain, help me, etc.)
+    // from `intent`, leaving just the subject/topic. We rebuild a precise
+    // action sentence around it.
+
+    // Clean the intent: strip leftover connector words from the front
+    var cleanIntent = intent
+      .replace(/^(okay so |so basically |um |well |like |basically |just |simply )/i, '')
+      .replace(/^(i guess |maybe |perhaps |sort of |kind of )/i, '')
+      .replace(/^(with |about |on |for |of |regarding |concerning )/i, '')
+      .trim();
+
+    // If cleanIntent is too short, fall back to raw minus filler
+    if (cleanIntent.length < 5) {
+      cleanIntent = raw
+        .replace(/^(please\s+|can you\s+|could you\s+|would you\s+|i want\s+(?:you to\s+)?|i need\s+(?:you to\s+)?|help me\s+)/i, '')
+        .replace(/\s*(please|thanks|thank you)\s*\.?$/i, '')
+        .trim();
+    }
+
+    // Strip redundant task-verb echoes from cleanIntent so the opener
+    // doesn't create "Implement X for write a sort function" patterns.
+    // Remove leading action verbs + articles that the opener replaces.
+    cleanIntent = cleanIntent
+      // Task-specific verb phrases
+      .replace(/^(brainstorm\s+(?:ideas?\s+(?:for\s+|about\s+|on\s+)?)?)/i, '')
+      .replace(/^(generate\s+(?:ideas?\s+(?:for\s+|about\s+)?)?)/i, '')
+      .replace(/^(come\s+up\s+with\s+(?:ideas?\s+(?:for\s+)?)?)/i, '')
+      .replace(/^(summarize\s+|summary\s+(?:of\s+)?)/i, '')
+      .replace(/^(analyze\s+|analysis\s+(?:of\s+)?)/i, '')
+      .replace(/^(explain\s+|explanation\s+(?:of\s+)?)/i, '')
+      .replace(/^(implement(?:ation)?\s+(?:of\s+)?)/i, '')
+      .replace(/^(write\s+|create\s+|build\s+|make\s+|develop\s+|craft\s+|compose\s+|draft\s+)/i, '')
+      .replace(/^(fix\s+(?:the\s+)?|debug\s+(?:the\s+)?|resolve\s+(?:the\s+)?)/i, '')
+      .replace(/^(review\s+(?:the\s+|my\s+)?|check\s+(?:the\s+|my\s+)?)/i, '')
+      .replace(/^(plan\s+(?:a\s+|the\s+)?|design\s+(?:a\s+|the\s+)?)/i, '')
+      .replace(/^(research\s+|investigate\s+)/i, '')
+      .replace(/^(optimize\s+(?:the\s+|my\s+)?|improve\s+(?:the\s+|my\s+)?)/i, '')
+      .replace(/^(how\s+to\s+(?:set\s+up\s+|configure\s+|install\s+|deploy\s+|build\s+|create\s+|make\s+|use\s+)?)/i, '')
+      .replace(/^(set\s+up\s+|configure\s+|install\s+)/i, '')
+      // Also strip "a strategy for" / "a plan for" if opener already says it
+      .replace(/^((?:a |an |the )?(?:marketing |growth |business |content |pricing |product |)(?:strategy|plan|roadmap|approach)\s+(?:for|to)\s+)/i, '')
+      .replace(/^((?:a |an |the )?(?:poem|story|essay|article|blog\s*post|letter|email|speech|script)\s+(?:about|on|for|regarding)\s+)/i, '')
+      // General articles
+      .replace(/^(a |an |the )/i, '')
+      .trim();
+
+    // Re-check if too short after additional stripping
+    if (cleanIntent.length < 3) {
+      cleanIntent = intent.trim();
+    }
+
+    // Detect the original verb the user used to preserve their core action
+    var origVerb = '';
+    var verbMatch = raw.match(/^(?:please\s+|can you\s+|could you\s+|would you\s+|i want\s+(?:you to\s+)?|i need\s+(?:you to\s+)?|help me\s+)?(write|create|build|make|implement|fix|debug|refactor|add|design|explain|describe|analyze|review|evaluate|plan|generate|develop|craft|compose|solve|calculate|summarize|compare|list|outline|draft|improve|optimize|set up|configure|deploy|test|check|assess|research|brainstorm|persuade|convince|guide|teach|show)\b/i);
+    if (verbMatch) origVerb = verbMatch[1].toLowerCase();
+
+    // Build a task-appropriate opening that actually rewrites the request
+    var taskOpeners = {
+      code: {
+        'default': 'Implement a production-grade solution for',
+        'fix': 'Debug, diagnose, and resolve the issue with',
+        'debug': 'Systematically diagnose and fix the defect in',
+        'refactor': 'Refactor and modernize the implementation of',
+        'add': 'Design and integrate into the existing codebase:',
+        'design': 'Architect a robust, scalable design for',
+        'test': 'Write a comprehensive test suite for',
+        'review': 'Perform a thorough code review of',
+        'optimize': 'Profile, identify bottlenecks, and optimize',
+        'deploy': 'Create a production deployment pipeline for',
+        'configure': 'Configure and set up with best-practice defaults:'
+      },
+      research: {
+        'default': 'Provide a thorough, evidence-based explanation of',
+        'explain': 'Explain the underlying mechanisms, causes, and implications of',
+        'describe': 'Provide a detailed, multi-faceted description of',
+        'compare': 'Conduct a rigorous comparison of',
+        'research': 'Synthesize current knowledge and key findings on'
+      },
+      creative: {
+        'default': 'Craft an original, polished piece on',
+        'write': 'Write a compelling, publication-quality piece on',
+        'draft': 'Develop a richly detailed draft of',
+        'compose': 'Compose with vivid detail and emotional resonance:'
+      },
+      strategy: {
+        'default': 'Develop a comprehensive, actionable strategy for',
+        'plan': 'Architect a detailed, milestone-driven plan for',
+        'evaluate': 'Evaluate all viable options with explicit trade-offs for',
+        'decide': 'Analyze trade-offs and deliver a clear recommendation on'
+      },
+      analysis: {
+        'default': 'Conduct a rigorous, evidence-backed analysis of',
+        'review': 'Perform a detailed critical review of',
+        'evaluate': 'Evaluate systematically using relevant frameworks:',
+        'assess': 'Assess the current state, root causes, and implications of'
+      },
+      math: {
+        'default': 'Solve with full mathematical rigor, showing all steps:',
+        'solve': 'Solve step-by-step with verification:',
+        'calculate': 'Calculate precisely, showing all intermediate work:',
+        'prove': 'Construct a rigorous proof for'
+      },
+      howto: {
+        'default': 'Provide a clear, step-by-step guide to',
+        'set up': 'Walk through the complete setup process for',
+        'configure': 'Provide detailed configuration instructions for'
+      },
+      brainstorm: {
+        'default': 'Generate a diverse range of creative and practical ideas for',
+        'list': 'Brainstorm and list actionable options for'
+      },
+      persuade: {
+        'default': 'Craft a compelling, persuasive argument for',
+        'convince': 'Build a well-structured case to convince the audience about',
+        'draft': 'Draft a persuasive communication for'
+      },
+      summarize: {
+        'default': 'Distill the essential insights and key takeaways from'
+      },
+      general: {
+        'default': 'Provide a thorough, specific, and actionable response to'
+      }
+    };
+
+    var openerMap = taskOpeners[task] || taskOpeners.general;
+    var opener = (origVerb && openerMap[origVerb]) ? openerMap[origVerb] : openerMap['default'];
+    var rewritten = opener + ' ' + cleanIntent;
+
+    // Capitalize first letter (should already be, but ensure)
+    rewritten = rewritten.charAt(0).toUpperCase() + rewritten.slice(1);
+
+    // ── Step 2: Expand short / vague prompts with task-specific detail ──
+    var expansions = [];
+
+    if (wc < 15) {
+      // Short prompts need the most expansion
+      var shortExpansions = {
+        code: [
+          'Include robust error handling for edge cases and invalid inputs.',
+          'Ensure the implementation is production-grade, well-documented, and includes usage examples.',
+          'Consider performance implications, security best practices, and maintainability.'
+        ],
+        research: [
+          'Ground the explanation in primary evidence and established mechanisms.',
+          'Distinguish between well-established consensus and areas of active debate.',
+          'Include concrete examples, real-world applications, and common misconceptions to avoid.'
+        ],
+        creative: [
+          'Use vivid sensory details and specific imagery rather than abstract descriptions.',
+          'Establish a consistent voice and emotional arc.',
+          'Every sentence should earn its place — prioritize impact and resonance over volume.'
+        ],
+        strategy: [
+          'Map out at least 3 distinct options with explicit trade-offs for each.',
+          'Identify key risks, second-order effects, and potential failure modes.',
+          'Provide a clear recommended path with rationale and implementation milestones.'
+        ],
+        analysis: [
+          'Separate observable facts from interpretation and inference.',
+          'Identify root causes rather than surface-level symptoms.',
+          'Provide specific, actionable recommendations supported by the evidence.'
+        ],
+        math: [
+          'Show all intermediate steps and justify each transformation.',
+          'Verify the result using an independent method.',
+          'Explain the intuition behind the approach, not just the mechanics.'
+        ],
+        howto: [
+          'List all prerequisites and dependencies before starting.',
+          'Make each step explicit enough that someone unfamiliar could follow without guessing.',
+          'Include common failure modes with symptoms and fixes at each step.'
+        ],
+        brainstorm: [
+          'Generate at least 10 ideas spanning conventional and unconventional approaches.',
+          'For each idea, include a one-line feasibility note and potential first step.',
+          'Push past the obvious — include at least 3 ideas that challenge assumptions.'
+        ],
+        persuade: [
+          'Lead with the strongest value proposition from the audience\'s perspective.',
+          'Anticipate and preemptively address the top 3 objections.',
+          'Close with a specific, low-friction call to action.'
+        ],
+        summarize: [
+          'Lead with the single most important takeaway.',
+          'Organize supporting points by significance, not by source order.',
+          'Flag any critical nuances that a summary might dangerously oversimplify.'
+        ],
+        general: [
+          'Be specific and concrete — avoid generic advice.',
+          'Support key points with evidence, examples, or reasoning.',
+          'Address the request thoroughly without unnecessary padding.'
+        ]
+      };
+      expansions = shortExpansions[task] || shortExpansions.general;
+    } else if (wc < 30) {
+      // Medium prompts get lighter expansion
+      var medExpansions = {
+        code: [
+          'Ensure the implementation handles edge cases and includes clear documentation.'
+        ],
+        research: [
+          'Cite mechanisms and distinguish established findings from speculation.'
+        ],
+        creative: [
+          'Prioritize specific sensory detail and emotional resonance over generic description.'
+        ],
+        strategy: [
+          'Include explicit trade-offs and risk assessment for each option presented.'
+        ],
+        analysis: [
+          'Identify root causes, not just symptoms, and provide actionable next steps.'
+        ],
+        general: [
+          'Be specific and thorough. Support claims with concrete reasoning or examples.'
+        ]
+      };
+      expansions = medExpansions[task] || medExpansions.general;
+    }
+
+    // ── Step 3: Add domain-specific depth requirements ──
+    if (a.domains.length > 0) {
+      var domainAdds = {
+        tech: 'Address scalability, security implications, and production-readiness.',
+        business: 'Ground recommendations in market realities, unit economics, and competitive dynamics.',
+        science: 'Adhere to scientific rigor — cite evidence levels and acknowledge methodological limitations.',
+        finance: 'Include quantitative analysis where possible and address risk factors explicitly.',
+        health: 'Reference clinical evidence and distinguish between correlation and causation.',
+        legal: 'Note jurisdictional variations and flag areas where professional legal counsel is advised.',
+        education: 'Apply learning science principles and consider diverse learner needs.'
+      };
+      var domAdd = domainAdds[a.domains[0]];
+      if (domAdd && expansions.indexOf(domAdd) === -1) expansions.push(domAdd);
+    }
+
+    // Note: Constraints and negations are already present in the user's raw
+    // prompt text (and thus in cleanIntent). The analyzer extracts them into
+    // a.constraints/a.negations but does NOT remove them from the intent,
+    // so appending them here would duplicate them.
+
+    // ── Step 4: Add audience calibration ──
+    if (a.audience) {
+      var audPhrases = {
+        beginner: 'Pitch the response for a beginner — define key terms, use clear analogies, and build from first principles.',
+        expert: 'Target an expert audience — skip fundamentals, use precise technical language, and prioritize depth over breadth.',
+        developer: 'Target a developer audience — be precise, include working code, and favor practical over theoretical.',
+        executive: 'Target an executive audience — lead with impact and decisions, keep it concise, use data to support recommendations.',
+        student: 'Target a student audience — build understanding progressively and verify comprehension at key steps.'
+      };
+      var audPhrase = audPhrases[a.audience];
+      if (audPhrase) expansions.push(audPhrase);
+    }
+
+    // ── Step 6: Add complexity-aware depth instructions ──
+    if (a.complexity === 'high' || depth >= 4) {
+      var complexAdds = {
+        code: 'This is a complex problem — consider architectural trade-offs, failure modes, and how the solution evolves over time.',
+        research: 'This topic has significant depth — address competing theories, methodological debates, and what experts still disagree about.',
+        strategy: 'This involves significant complexity — model second-order effects and identify the highest-leverage decision points.',
+        general: 'This requires careful thought — decompose the problem, consider multiple approaches, and identify where your reasoning might be weakest.'
+      };
+      var complexAdd = complexAdds[task] || complexAdds.general;
+      if (expansions.indexOf(complexAdd) === -1) expansions.push(complexAdd);
+    }
+
+    // ── Step 7: Add depth-based quality gates ──
+    if (depth >= 3) {
+      expansions.push('If you are uncertain about any claim, explicitly flag your confidence level.');
+    }
+    if (depth >= 5) {
+      expansions.push('Include what most experts know but rarely say, and end with an honest self-assessment of where your answer might be weakest.');
+    }
+
+    // ── Step 8: Assemble the rewritten prompt ──
+    // Ensure the rewritten text ends with a period if it doesn't already
+    rewritten = rewritten.replace(/[\s.;,!?]+$/, '');
+
+    if (expansions.length > 0) {
+      rewritten += '.\n\n' + expansions.join('\n\n');
+    } else {
+      rewritten += '.';
+    }
+
+    // ── Step 9: Add tone directive if present ──
+    if (a.tone) {
+      var toneDirective = {
+        formal: 'Maintain a formal, professional tone throughout.',
+        casual: 'Keep the tone conversational and approachable.',
+        humorous: 'Inject wit and personality while keeping the substance sharp.',
+        simple: 'Use plain language — if a 12-year-old couldn\'t follow it, simplify.',
+        technical: 'Use precise technical language. No hand-waving.',
+        persuasive: 'Write to persuade — every paragraph should build the case.'
+      };
+      if (toneDirective[a.tone]) {
+        rewritten += '\n\n' + toneDirective[a.tone];
+      }
+    }
+
+    return rewritten;
+  }
+
   // ── HAIL MARY — Autonomous Agent Mode ────────────────────────────────────────
   function buildHailMary(a, depth) {
     var role = pickRole(a);
+    var rewritten = rewriteIntent(a, depth);
 
     var prompt = '[SYSTEM ROLE: AUTONOMOUS REASONING AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'TASK: ' + a.intent + '\n\n';
+    prompt += 'TASK:\n' + rewritten + '\n\n';
 
     prompt += 'COGNITIVE FRAMEWORK:\n';
     if (a.complexity === 'high' || depth >= 4) {
@@ -976,10 +1271,11 @@ window.HailMaryEngine = (function () {
   // ── MANUS — Orchestration Agent Mode ─────────────────────────────────────────
   function buildManus(a, depth) {
     var role = pickRole(a);
+    var rewritten = rewriteIntent(a, depth);
 
     var prompt = '[SYSTEM ROLE: ORCHESTRATION AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'OBJECTIVE: ' + a.intent + '\n\n';
+    prompt += 'OBJECTIVE:\n' + rewritten + '\n\n';
 
     prompt += 'OPERATIONAL FRAMEWORK:\n';
     prompt += '• Task Decomposition: Break into sequential phases with clear deliverables\n';
@@ -1034,10 +1330,11 @@ window.HailMaryEngine = (function () {
   // ── JUMA — Multi-Perspective Agent Mode ──────────────────────────────────────
   function buildJuma(a, depth) {
     var role = pickRole(a);
+    var rewritten = rewriteIntent(a, depth);
 
     var prompt = '[SYSTEM ROLE: MULTI-PERSPECTIVE REASONING AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'QUERY: ' + a.intent + '\n\n';
+    prompt += 'QUERY:\n' + rewritten + '\n\n';
 
     prompt += 'REASONING ARCHITECTURE:\n';
     prompt += '• Parallel Processing: Examine through multiple independent lenses\n';
@@ -1217,6 +1514,8 @@ window.HailMaryEngine = (function () {
   // ── TURNS GENERATOR ──────────────────────────────────────────────────────────
   function buildTurns(raw, numTurns) {
     var a = analyze(raw);
+    var rewritten = rewriteIntent(a, 3);
+    var rewrittenFirstLine = rewritten.split('\n')[0];
     var hash = Math.abs(parseInt(a.fp, 36) || 0);
     var turns = [];
 
@@ -1244,14 +1543,14 @@ window.HailMaryEngine = (function () {
           general: 'I need to understand this properly for real-world application'
         };
         turnText = (stakes[a.task] || stakes.general) + '. I will ask ' + numTurns + ' questions that build on each other.\n\n';
-        turnText += 'Start by explaining ' + a.intent + ' from first principles. What are the core concepts I need to understand before we go deeper?';
+        turnText += 'Start by explaining: ' + rewrittenFirstLine + '\n\nWhat are the core concepts I need to understand before we go deeper?';
       } else if (i === 1) {
         if (a.task === 'code') {
           turnText = 'Now explain the architecture. How do the components interact? What are the data flows, state management patterns, and key interfaces?';
         } else if (a.task === 'research') {
           turnText = 'Walk me through the underlying mechanism. How does this actually work? What is the causal chain from input to outcome?';
         } else {
-          turnText = 'Break down how ' + a.intent + ' actually works. Not just what it is, but the mechanics of how it operates.';
+          turnText = 'Break down how this actually works in detail. Not just what it is, but the mechanics of how it operates.';
         }
       } else if (i === 2 && numTurns >= 8) {
         turnText = 'Let me add context: ' + (a.context.length > 0 ? a.context[0] : 'I am working in a real environment with constraints') + '. How does this change the approach? What assumptions might not hold?';
