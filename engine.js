@@ -931,23 +931,19 @@ window.HailMaryEngine = (function () {
     };
 
     // ── STEALTH ───────────────────────────────────────────────────────────
-    // Use the rewriter's normalize+enrich helpers for a much higher-quality
-    // hand-written-feeling rewrite (no obvious scaffolding, just a sharper prompt).
-    var stealthContent = rwEnrich(rwNormalize(raw));
-    if (!/\b(best|expert|thorough|comprehensive|detailed|precise|specific)\b/i.test(stealthContent)) {
-      stealthContent += ' Be specific and precise — no hedging.';
-    }
-    if (!/\b(example|instance|case|scenario)\b/i.test(stealthContent) && stealthContent.split(/\s+/).length > 5) {
-      stealthContent += ' Include a concrete example where it helps.';
-    }
-    if (/\b(analyze|compare|evaluate|design|implement|strategy|plan|debug|diagnose)\b/i.test(raw)) {
-      stealthContent = 'Think it through step by step. ' + stealthContent;
-    }
+    // A genuine, task-aware rewrite that reads as one tight, hand-written
+    // paragraph — no headers, no bullet salad, no obvious scaffolding.  It
+    // re-anchors on the real subject (with the user's named technologies /
+    // files / numbers woven back in) and replaces the user's verb with a
+    // task-appropriate imperative followed by 2–4 concrete demands.  The
+    // result is meaningfully different from the input — not just the input
+    // with a "Be specific" suffix.
+    var stealthContent = buildStealthRewrite(raw, analysis);
 
     strategies.stealth = {
       type: 'stealth',
       label: 'Stealth Enhance',
-      description: 'Subtly improves your prompt without obvious scaffolding — looks hand-written',
+      description: 'A real, task-aware rewrite of your prompt — no scaffolding, just a sharper version that reads as if a senior writer had drafted it',
       content: stealthContent
     };
 
@@ -1325,22 +1321,32 @@ window.HailMaryEngine = (function () {
     ctxInline.forEach(function (c) { if (!context.includes(c)) context.push(c); });
     context = context.slice(0, 4);
 
-    // Multi-pass intent extraction: peel filler/pleasantries first, then peel
-    // the leading imperative — repeated until no more peels apply, so messy
-    // openers like "hey can you please help me with X" reduce cleanly to "X".
+    // Two-stage intent extraction:
+    //   Stage A — REPEATEDLY peel filler/modal/pleasantry patterns until no
+    //             more apply.  These are pure filler with no informational
+    //             content, so cascading them is safe and reduces messy
+    //             openers like "hey can you please ..." to a clean stem.
+    //   Stage B — Peel AT MOST ONE leading content-bearing imperative
+    //             ("explain", "build", "tell me about", etc.) — the same
+    //             single-pass behavior as v9.2.  This avoids over-stripping
+    //             content verbs, which would degrade every injection
+    //             strategy that embeds analysis.intent (System / Chain /
+    //             Expert / Socratic / Adversarial / Tournament / Contrarian).
     var intent = raw;
     var prevIntent;
-    var peelPatterns = [
+    var fillerPatterns = [
       /^(please\s+|hey\s+|hi\s+|hello\s+|yo\s+|so\s+|um+\s+|uh+\s+|ok\s+|okay\s+)+/i,
-      /^(can you\s+|could you\s+|would you\s+|will you\s+)/i,
-      /^(i\s+(?:want|need|would\s+like)(?:\s+you)?(?:\s+to)?\s+|i'?d\s+like(?:\s+you)?(?:\s+to)?\s+)/i,
-      /^(help me\s+(?:with\s+|to\s+)?|write me\s+|create\s+a?\s*|make\s+a?\s*|generate\s+a?\s*|give me\s+a?\s*|show me\s+|tell me\s+(?:about\s+)?|explain\s+(?:to me\s+)?(?:what\s+)?|describe\s+|analyze\s+|build\s+a?\s*|implement\s+a?\s*|write\s+a?\s*)/i,
-      /^(what\s+is\s+|what\s+are\s+|how\s+does\s+|how\s+do\s+|how\s+to\s+|why\s+(?:does\s+|is\s+|are\s+)?)/i
+      /^(can you\s+|could you\s+|would you\s+|will you\s+)+/i,
+      /^(i\s+(?:want|need|would\s+like)(?:\s+you)?(?:\s+to)?\s+|i'?d\s+like(?:\s+you)?(?:\s+to)?\s+)/i
     ];
     do {
       prevIntent = intent;
-      peelPatterns.forEach(function (re) { intent = intent.replace(re, ''); });
+      fillerPatterns.forEach(function (re) { intent = intent.replace(re, ''); });
     } while (intent !== prevIntent);
+    intent = intent.replace(
+      /^(help me\s+(?:with\s+|to\s+)?|write me\s+|create\s+a?\s*|make\s+a?\s*|generate\s+a?\s*|give me\s+a?\s*|show me\s+|tell me\s+(?:about\s+)?|explain\s+(?:to me\s+)?(?:what\s+)?|describe\s+|analyze\s+|build\s+a?\s*|implement\s+a?\s*|write\s+a?\s*|what\s+is\s+|what\s+are\s+|how\s+does\s+|how\s+do\s+|how\s+to\s+|why\s+(?:does\s+|is\s+|are\s+)?)/i,
+      ''
+    );
     intent = intent
       .replace(/\s*(please|thanks|thank you|thx|cheers)\s*[!.?]*$/i, '')
       .trim() || raw;
@@ -1354,7 +1360,9 @@ window.HailMaryEngine = (function () {
 
     var fp = raw.split('').reduce(function (h, c) { return (((h << 5) - h) + c.charCodeAt(0)) | 0; }, 0).toString(36);
 
-    return { raw: raw, intent: intent, subject: subject, task: task, domains: domains, complexity: complexity, audience: audience, fmt: fmt, tone: tone, constraints: constraints, negations: negations, context: context, wc: wc, amb: amb, fp: fp };
+    var entities = (typeof rwEntities === 'function') ? rwEntities(raw) : { tech: [], files: [], numbers: [] };
+
+    return { raw: raw, intent: intent, subject: subject, task: task, domains: domains, complexity: complexity, audience: audience, fmt: fmt, tone: tone, constraints: constraints, negations: negations, context: context, entities: entities, wc: wc, amb: amb, fp: fp };
   }
 
   // ── DYNAMIC ROLE GENERATOR ───────────────────────────────────────────────────
@@ -1670,6 +1678,16 @@ window.HailMaryEngine = (function () {
   // The output is one flowing block (no "| Must:" tag salad), suitable to be
   // dropped in as the TASK content of any of the framework builders below.
 
+  // Hyphen-safe word boundary helpers.  JavaScript's \b treats "-" as a word
+  // boundary, so /\bjust\b/.test("just-in-time") is true and would mangle
+  // hyphenated compound terms.  rwTokenRe wraps a list of literal tokens with
+  // negative-lookbehind/lookahead assertions that reject neighbouring word
+  // chars *and* hyphens, so "just-in-time", "pretty-printed", "good-natured",
+  // etc. survive untouched.
+  function rwTokenRe(tokens) {
+    return new RegExp('(?<![\\w-])(?:' + tokens.join('|') + ')(?![\\w-])', 'gi');
+  }
+
   function rwNormalize(t) {
     if (!t) return '';
     var x = String(t);
@@ -1677,10 +1695,17 @@ window.HailMaryEngine = (function () {
     x = x.replace(/^(please\s+|hey\s+|hi\s+|hello\s+|yo\s+)+/gi, '');
     x = x.replace(/\s*(please|thanks|thank you|thx|cheers)\s*[!.?]*\s*$/gi, '');
     // Strip mid-sentence "please" entirely — it has no informational content.
-    x = x.replace(/\bplease\b\s*/gi, '');
-    // Soften filler hedges
-    x = x.replace(/\b(maybe|perhaps|kind ?of|sort of|just|basically|essentially|literally|actually|really|very|quite|rather|pretty|somewhat)\b/gi, '');
-    // Verb / phrasing upgrades
+    // Use the hyphen-safe matcher so words like "yes-please-thanks-X" tags
+    // aren't accidentally mangled (uncommon, but cheap insurance).
+    x = x.replace(rwTokenRe(['please']), '');
+    // Soften filler hedges (hyphen-safe so "just-in-time", "really-fast", etc. are preserved).
+    x = x.replace(rwTokenRe([
+      'maybe', 'perhaps', 'kind ?of', 'sort of', 'just', 'basically',
+      'essentially', 'literally', 'actually', 'really', 'very', 'quite',
+      'rather', 'pretty', 'somewhat'
+    ]), '');
+    // Verb / phrasing upgrades.  These are multi-word phrases that almost
+    // never appear inside a hyphenated compound, so plain \b is fine here.
     var verbMap = [
       [/\b(can|could|would|will)\s+you\s+/gi, ''],
       [/\bi\s+(?:want|need|would\s+like)(?:\s+you)?(?:\s+to)?\s+/gi, ''],
@@ -1708,23 +1733,76 @@ window.HailMaryEngine = (function () {
   function rwEnrich(t) {
     if (!t) return '';
     var x = String(t);
-    var enrichMap = [
-      [/\b(some|a few|a couple of)\b/gi, '3–5 distinct'],
-      [/\b(many|lots of|plenty of|a bunch of|tons of)\b/gi, '7 or more'],
-      [/\b(quickly|fast)\b/gi, 'efficiently'],
-      [/\b(good|nice|great|cool|awesome)\b/gi, 'high-quality'],
-      [/\b(bad|terrible|awful)\b/gi, 'low-quality'],
-      [/\b(simple|easy)\b/gi, 'minimal-friction'],
-      [/\b(complex|complicated)\b/gi, 'multi-layered'],
-      [/\b(detailed|thorough)\b/gi, 'comprehensive'],
-      [/\bstuff\b/gi, 'specific elements'],
-      [/\bthings\b/gi, 'concrete items'],
-      [/\binfo\b/gi, 'information'],
-      [/\b(huge|massive)\b/gi, 'substantial'],
-      [/\bawful lot\b/gi, 'substantial amount']
+    // Single-word enrichments — must be hyphen-safe so "good-natured",
+    // "simple-minded", "complex-valued", "fast-track", etc. survive.
+    var singleWord = [
+      [['some', 'a few', 'a couple of'],                    '3–5 distinct'],
+      [['many', 'lots of', 'plenty of', 'a bunch of', 'tons of'], '7 or more'],
+      [['quickly', 'fast'],                                  'efficiently'],
+      [['good', 'nice', 'great', 'cool', 'awesome'],         'high-quality'],
+      [['bad', 'terrible', 'awful'],                         'low-quality'],
+      [['simple', 'easy'],                                   'minimal-friction'],
+      [['complex', 'complicated'],                           'multi-layered'],
+      [['detailed', 'thorough'],                             'comprehensive'],
+      [['stuff'],                                            'specific elements'],
+      [['things'],                                           'concrete items'],
+      [['info'],                                             'information'],
+      [['huge', 'massive'],                                  'substantial']
     ];
-    enrichMap.forEach(function (m) { x = x.replace(m[0], m[1]); });
+    singleWord.forEach(function (e) {
+      x = x.replace(rwTokenRe(e[0]), e[1]);
+    });
+    // Multi-word phrase: safe with plain \b
+    x = x.replace(/\bawful lot\b/gi, 'substantial amount');
     return x;
+  }
+
+  // Pull out the concrete, content-bearing nouns the user actually typed —
+  // languages, frameworks, file types, named tools, numbers — so the
+  // rewriter can anchor its expansion in the user's domain rather than
+  // producing a generic templated paragraph.
+  function rwEntities(raw) {
+    if (!raw) return { tech: [], files: [], numbers: [] };
+    var r = String(raw);
+    var tech = [];
+    var techPatterns = [
+      // Languages
+      /\b(python|javascript|typescript|java|kotlin|swift|rust|go|golang|c\+\+|c#|csharp|ruby|php|scala|elixir|haskell|clojure|sql|bash|shell|zsh|powershell|html|css|sass|scss|less|graphql)\b/gi,
+      // Frameworks / libraries
+      /\b(react|vue|angular|svelte|next\.?js|nuxt|gatsby|django|flask|fastapi|spring|rails|laravel|express|nest\.?js|tensorflow|pytorch|keras|numpy|pandas|matplotlib|scikit[- ]learn|huggingface|langchain|tailwind|bootstrap|jquery|redux|zustand|prisma|sequelize|mongoose|hibernate|openai|anthropic)\b/gi,
+      // Infra / tools
+      /\b(docker|kubernetes|k8s|terraform|ansible|helm|jenkins|github actions|gitlab ci|circleci|aws|gcp|azure|vercel|netlify|cloudflare|fly\.io|heroku|s3|ec2|lambda|rds|dynamodb|firestore|firebase|supabase|postgres|postgresql|mysql|mariadb|sqlite|mongodb|redis|elasticsearch|kafka|rabbitmq|nginx|apache|grpc|rest|graphql|websocket)\b/gi,
+      // Models / AI
+      /\b(gpt-?[345o]|claude|gemini|llama|mistral|deepseek|grok|stable diffusion|midjourney|dall[- ]?e|whisper)\b/gi
+    ];
+    techPatterns.forEach(function (re) {
+      var m;
+      while ((m = re.exec(r)) !== null) {
+        var v = m[1] || m[0];
+        var canon = v.toLowerCase();
+        if (!tech.some(function (t) { return t.toLowerCase() === canon; })) tech.push(v);
+        if (tech.length >= 6) break;
+      }
+    });
+
+    // File types / extensions and concrete artifacts
+    var files = [];
+    var fileMatches = r.match(/\b\w{1,20}\.(?:csv|tsv|json|jsonl|xml|yaml|yml|toml|ini|env|md|txt|log|html|css|js|ts|tsx|jsx|py|rb|go|rs|java|kt|swift|c|cpp|h|hpp|sh|sql|pdf|docx|xlsx|png|jpg|svg|mp4|wav|mp3)\b/gi) || [];
+    var extOnly = r.match(/\.(?:csv|tsv|json|jsonl|xml|yaml|yml|toml|html|css|js|ts|tsx|jsx|py|rb|go|rs|java|kt|swift|c|cpp|h|hpp|sh|sql|pdf|docx|xlsx)\b/gi) || [];
+    fileMatches.concat(extOnly).forEach(function (f) {
+      var canon = f.toLowerCase();
+      if (!files.some(function (x) { return x.toLowerCase() === canon; })) files.push(f);
+    });
+    files = files.slice(0, 5);
+
+    // Concrete numbers / quantities (years, counts, percentages, sizes)
+    var numbers = [];
+    var numMatches = r.match(/\b\d{1,4}(?:\.\d+)?\s*(?:%|percent|years?|months?|weeks?|days?|hours?|minutes?|seconds?|ms|s|kb|mb|gb|tb|users?|requests?|rps|qps|rows?|columns?|records?|items?|tokens?|chars?|lines?|files?|threads?|cores?|gpus?|cpus?)\b/gi) || [];
+    numMatches.forEach(function (n) {
+      if (numbers.indexOf(n) === -1 && numbers.length < 5) numbers.push(n);
+    });
+
+    return { tech: tech, files: files, numbers: numbers };
   }
 
   function rwOpening(core, a, depth) {
@@ -1745,9 +1823,12 @@ window.HailMaryEngine = (function () {
     var subject = (core || a.intent || a.subject || a.raw || '').trim();
     // Strip multi-word leading imperatives first (longest match wins) so we
     // don't end up with "Engineer me through writing X" or "Distill in depth Y".
-    subject = subject.replace(/^(guide me through|explain in depth|reason rigorously about|verify whether|compose a comprehensive piece on|execute a)\s+/i, '');
+    subject = subject.replace(/^(guide me through|explain in depth|reason rigorously about|verify whether|compose a comprehensive piece on|execute a|set up|spin up|stand up|roll out|put together|figure out|work out)\s+/i, '');
     // Then strip single-word leading imperatives so we don't double-stack verbs.
-    subject = subject.replace(/^(write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate)\s+/i, '');
+    subject = subject.replace(/^(write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate|fix|debug|refactor|migrate|optimize|harden|deploy|test|compute|calculate|evaluate|compare|plan|draft|outline|prepare|propose|recommend|critique|edit|rewrite|translate)\s+/i, '');
+    // Strip leading question-form openers ("how does X", "what is Y") so the
+    // rewriter's own verb doesn't double up ("Investigate how does …").
+    subject = subject.replace(/^(?:how\s+(?:does|do|to|can|should|would|will)\s+|what\s+(?:is|are|was|were|does|do|will|would|should)\s+|why\s+(?:does|do|is|are|was|were|will|would|should)\s+|when\s+(?:does|do|is|are|will|would|should)\s+|where\s+(?:does|do|is|are|can|will|should)\s+|which\s+|who\s+(?:is|are|was|were)\s+)/i, '');
     if (subject) subject = subject.charAt(0).toLowerCase() + subject.slice(1);
     var stake = '';
     if (depth >= 5) stake = ' to a research-defensible, expert-jury-grade standard';
@@ -1798,6 +1879,19 @@ window.HailMaryEngine = (function () {
     if ((a.domains || []).length > 0) {
       demands.push('Use the precise domain terminology of ' + a.domains[0] + ' rather than colloquial paraphrase');
     }
+    // Anchor in the user's actual nouns: if they mentioned specific
+    // technologies, file types, or numbers, demand the answer engages with
+    // those concrete things rather than abstracting over them.
+    var ent = a.entities || { tech: [], files: [], numbers: [] };
+    if (ent.tech.length) {
+      demands.push('Engage with the specific technologies the user mentioned (' + ent.tech.slice(0, 4).join(', ') + ') by name — do not abstract over them');
+    }
+    if (ent.files.length) {
+      demands.push('Treat the named artifacts (' + ent.files.slice(0, 3).join(', ') + ') as real, with realistic schema/content assumptions stated up front');
+    }
+    if (ent.numbers.length) {
+      demands.push('Honor the concrete quantities the user gave (' + ent.numbers.slice(0, 3).join(', ') + ') — do not hand-wave them into "some" or "a few"');
+    }
     if (!demands.length) return '';
     return demands.join('. ') + '.';
   }
@@ -1820,6 +1914,99 @@ window.HailMaryEngine = (function () {
     if (depth >= 4) v.push('list at least one thing this answer might be wrong about');
     if (depth >= 5) v.push('produce a brief self-audit naming the weakest link in your reasoning and what would falsify it');
     return 'Before finalizing, ' + v.join('; ') + '.';
+  }
+
+  // Task-aware "stealth" rewriter.  Builds a single tight paragraph that
+  // reads as if a senior practitioner had hand-rewritten the prompt — no
+  // headers, no bullets, no obvious scaffolding, but meaningfully different
+  // from the input (not just the input with a "Be specific" suffix).
+  // The shape is: <task verb> <subject> <task-specific demands woven into
+  // prose>, with the user's actual named technologies / files / numbers
+  // re-anchored so it never feels generic.
+  function buildStealthRewrite(raw, a) {
+    var clean = rwEnrich(rwNormalize(raw));
+    // Strip whatever leading verb rwNormalize/Enrich produced so we can
+    // prepend our own task-specific verb cleanly.
+    var subject = clean
+      .replace(/^(?:Guide me through|Investigate and synthesize|Analyze and diagnose|Compose with craft|Strategize|Craft persuasive material on|Distill|Solve and verify|Address with rigor|Engineer|Explain in depth|Reason rigorously about|Verify whether|Compose a comprehensive piece on|Execute a|Demonstrate|Produce|Determine|Work out|Review|Analyze|Set up|Spin up|Stand up|Roll out|Put together|Figure out)\s+/i, '')
+      .replace(/^(?:write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate|compare|evaluate|plan|debug|diagnose|fix|refactor|migrate|optimize|harden|deploy|test|compute|calculate|draft|outline|prepare|propose|recommend|critique|edit|rewrite|translate)\s+(?:me\s+|us\s+|a\s+|an\s+|the\s+|some\s+|that\s+|it\s+)*/i, '')
+      // Strip leading question-form openers ("how does X", "what is Y",
+      // "why are Z") so the rewriter's own opener doesn't double-stack
+      // ("Explain how does pretty-printed JSON differ").
+      .replace(/^(?:how\s+(?:does|do|to|can|should|would|will)\s+|what\s+(?:is|are|was|were|does|do|will|would|should)\s+|why\s+(?:does|do|is|are|was|were|will|would|should)\s+|when\s+(?:does|do|is|are|will|would|should)\s+|where\s+(?:does|do|is|are|can|will|should)\s+|which\s+|who\s+(?:is|are|was|were)\s+)/i, '')
+      .replace(/[.?!]+$/, '')
+      .trim();
+    if (!subject) subject = (a.intent || raw).trim();
+    if (subject) subject = subject.charAt(0).toLowerCase() + subject.slice(1);
+
+    var ent = a.entities || { tech: [], files: [], numbers: [] };
+    var anchor = '';
+    if (ent.tech.length) {
+      anchor += ' Treat ' + ent.tech.slice(0, 3).join(', ') +
+        (ent.tech.length === 1 ? ' as a real tool, not a placeholder' : ' as real tools, not placeholders') + '.';
+    }
+    if (ent.files.length) {
+      anchor += ' Assume ' + ent.files.slice(0, 2).join(' and ') + ' is a real file with realistic content; state your schema assumption explicitly.';
+    }
+    if (ent.numbers.length) {
+      anchor += ' Honor the concrete numbers (' + ent.numbers.slice(0, 2).join(', ') + ') instead of softening them.';
+    }
+
+    // Per-task structured rewrites.  Each one is a single paragraph that
+    // explicitly differs from the input — different opening verb, different
+    // structure, concrete demands, and a closing constraint.
+    var t = a.task || 'general';
+    var rewritten;
+    switch (t) {
+      case 'code':
+        rewritten = 'Write production-quality, runnable code for ' + subject +
+          '. State the exact inputs and outputs up front, validate inputs, handle empty / null / malformed cases explicitly, and include a short worked example with realistic data. Add inline comments that explain *why* (not what), and end with a one-line note on time and space complexity. No pseudocode, no stubs.';
+        break;
+      case 'research':
+        rewritten = 'Explain ' + subject +
+          ' rigorously. Distinguish established consensus from active debate, name at least two specific sources or schools of thought, and cite a concrete mechanism — not a correlation — for every claim. Surface the strongest counter-evidence and state what would change the conclusion.';
+        break;
+      case 'analysis':
+        rewritten = 'Diagnose ' + subject +
+          '. Lead with the answer in one sentence, then justify it. Name the top three causal factors in order of estimated impact, with concrete evidence for each. Flag any factor below 70% confidence, and state at least one thing the diagnosis might be missing.';
+        break;
+      case 'creative':
+        rewritten = 'Compose ' + subject +
+          ' with vivid sensory specificity — sight, sound, texture, weight. Avoid abstract emotion words ("happy", "sad", "beautiful"); earn the feeling through concrete physical detail. Aim for at least one striking, original image per paragraph and cut every line that does not pull its weight.';
+        break;
+      case 'strategy':
+        rewritten = 'Recommend a strategy for ' + subject +
+          '. Open with the recommendation in one sentence. Then map the two strongest alternatives, score them honestly against the same criteria, and explain why each was rejected. Name at least one risk that, if it materialized, would change the recommendation.';
+        break;
+      case 'persuade':
+        rewritten = 'Argue for ' + subject +
+          '. Open with the strongest version of the opposing view first, then dismantle it. Use one concrete example, one named comparison, and one falsifiable prediction. Close with the single line that, if remembered, would change a skeptic\'s mind.';
+        break;
+      case 'howto':
+        rewritten = 'Walk through ' + subject +
+          ' as numbered, copy-pasteable steps. For each step, state the exact command or action, the expected output, and one common failure mode with how to recognize and recover from it. End with a verification step that proves the whole sequence worked.';
+        break;
+      case 'brainstorm':
+        rewritten = 'Generate seven or more distinct directions for ' + subject +
+          ', spanning safe-and-conventional through genuinely contrarian. Tag each one [SAFE], [STRETCH], or [CONTRARIAN], add a one-sentence description, the strongest reason it might work, and a one-line "why this might fail."';
+        break;
+      case 'summarize':
+        rewritten = 'Summarize ' + subject +
+          '. Lead with a one-sentence thesis, then three to five supporting bullets in priority order. Keep the entire summary under 200 words. End with the single fact a reader must not forget.';
+        break;
+      case 'math':
+        rewritten = 'Solve ' + subject +
+          ' step by step. State the rule or formula used at each step, verify the final answer with a different method (estimation, substitution, or sanity-check), and state every unit and domain assumption explicitly.';
+        break;
+      default:
+        rewritten = 'Address ' + subject +
+          ' rigorously. Lead with the answer, then justify it. Name the assumption the answer most depends on, give one concrete example, and call out one realistic edge case where the answer would not hold.';
+    }
+
+    rewritten += anchor;
+    // No throat-clearing on the way in.
+    rewritten = rewritten.replace(/\s{2,}/g, ' ').trim();
+    return rewritten;
   }
 
   function rewritePrompt(a, depth) {
@@ -1959,7 +2146,7 @@ window.HailMaryEngine = (function () {
       mode: resolvedMode,
       autoRouted: mode === 'auto',
       techniques: techNames.slice(0, techCount + 3),
-      analysis: { task: a.task, domains: a.domains, complexity: a.complexity, intent: a.intent, isVague: a.amb >= 3 },
+      analysis: { task: a.task, domains: a.domains, complexity: a.complexity, intent: a.intent, entities: a.entities, isVague: a.amb >= 3 },
       score: score,
       injectionStrategies: injectionStrategies,
       stats: {
