@@ -1162,7 +1162,7 @@ window.HailMaryEngine = (function () {
         general: 'This requires careful thought — decompose the problem, consider multiple approaches, and identify where your reasoning might be weakest.'
       };
       var complexAdd = complexAdds[task] || complexAdds.general;
-      if (depth >= 4 && expansions.indexOf(complexAdd) === -1) expansions.push(complexAdd);
+      if (expansions.indexOf(complexAdd) === -1) expansions.push(complexAdd);
     }
 
     // ── Step 7: Add depth-based quality gates ──
