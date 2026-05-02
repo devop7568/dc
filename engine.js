@@ -528,7 +528,6 @@ window.HailMaryEngine = (function () {
         (analysis.audience ? 'Audience: ' + analysis.audience + '. ' : '') +
         buildFormatDirective(analysis),
       userPrompt: systemRewrite +
-        (analysis.constraints.length > 0 ? '\n\nConstraints: ' + analysis.constraints.join('; ') : '') +
         (analysis.context.length > 0 ? '\n\nContext: ' + analysis.context.join(' ') : '')
     };
 
@@ -861,21 +860,11 @@ window.HailMaryEngine = (function () {
   }
 
   function buildContextBlock(a) {
+    // Only include user background context here.
+    // Constraints, negations, audience, and tone are now handled by rewriteIntent()
+    // and would be duplicated if included here as well.
     var parts = [];
     if (a.context.length > 0) parts.push('Context: ' + a.context.join(' '));
-    if (a.constraints.length > 0) parts.push('Requirements: ' + a.constraints.join('; '));
-    if (a.negations.length > 0) parts.push('Avoid: ' + a.negations.join('; '));
-    if (a.audience) {
-      var audDesc = {
-        beginner: 'Audience is a beginner — define terms, use analogies, build from first principles',
-        expert: 'Audience is an expert — skip basics, use precise terminology, go deep',
-        developer: 'Audience is a developer — be precise, show working code',
-        executive: 'Audience is an executive — lead with impact and decisions',
-        student: 'Audience is a student — build understanding progressively, check comprehension'
-      };
-      parts.push(audDesc[a.audience] || ('Audience: ' + a.audience));
-    }
-    if (a.tone) parts.push('Tone: ' + a.tone);
     return parts.join('\n');
   }
 
@@ -1146,15 +1135,12 @@ window.HailMaryEngine = (function () {
       if (domAdd && expansions.indexOf(domAdd) === -1) expansions.push(domAdd);
     }
 
-    // ── Step 4: Incorporate constraints and negations naturally ──
-    if (a.constraints.length > 0) {
-      rewritten += '. Key requirements: ' + a.constraints.join('; ');
-    }
-    if (a.negations.length > 0) {
-      rewritten += '. Explicitly ' + a.negations.join('; ');
-    }
+    // Note: Constraints and negations are already present in the user's raw
+    // prompt text (and thus in cleanIntent). The analyzer extracts them into
+    // a.constraints/a.negations but does NOT remove them from the intent,
+    // so appending them here would duplicate them.
 
-    // ── Step 5: Add audience calibration ──
+    // ── Step 4: Add audience calibration ──
     if (a.audience) {
       var audPhrases = {
         beginner: 'Pitch the response for a beginner — define key terms, use clear analogies, and build from first principles.',
