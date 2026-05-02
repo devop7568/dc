@@ -1694,6 +1694,9 @@ window.HailMaryEngine = (function () {
     // Strip leading/trailing pleasantries
     x = x.replace(/^(please\s+|hey\s+|hi\s+|hello\s+|yo\s+)+/gi, '');
     x = x.replace(/\s*(please|thanks|thank you|thx|cheers)\s*[!.?]*\s*$/gi, '');
+    // Strip "help me (with|to) ..." openers up front so the stealth + main
+    // rewriters don't end up restating "help me debug ..." as the subject.
+    x = x.replace(/^(?:help\s+me\s+(?:with\s+|to\s+)?|write\s+me\s+(?:a\s+|an\s+|some\s+)?|give\s+me\s+(?:a\s+|an\s+|some\s+)?|show\s+me\s+(?:a\s+|an\s+|how\s+to\s+)?|tell\s+me\s+(?:about\s+|how\s+to\s+)?)/i, '');
     // Strip mid-sentence "please" entirely — it has no informational content.
     // Use the hyphen-safe matcher so words like "yes-please-thanks-X" tags
     // aren't accidentally mangled (uncommon, but cheap insurance).
@@ -1785,12 +1788,25 @@ window.HailMaryEngine = (function () {
       }
     });
 
-    // File types / extensions and concrete artifacts
+    // File types / extensions and concrete artifacts.  Prefer named files
+    // (e.g. churn.csv, README.md) over bare extensions (.csv).  Only emit
+    // a bare extension when no named file with that extension was found,
+    // so we don't pollute output with both "churn.csv" and ".csv".
     var files = [];
     var fileMatches = r.match(/\b\w{1,20}\.(?:csv|tsv|json|jsonl|xml|yaml|yml|toml|ini|env|md|txt|log|html|css|js|ts|tsx|jsx|py|rb|go|rs|java|kt|swift|c|cpp|h|hpp|sh|sql|pdf|docx|xlsx|png|jpg|svg|mp4|wav|mp3)\b/gi) || [];
-    var extOnly = r.match(/\.(?:csv|tsv|json|jsonl|xml|yaml|yml|toml|html|css|js|ts|tsx|jsx|py|rb|go|rs|java|kt|swift|c|cpp|h|hpp|sh|sql|pdf|docx|xlsx)\b/gi) || [];
-    fileMatches.concat(extOnly).forEach(function (f) {
+    fileMatches.forEach(function (f) {
       var canon = f.toLowerCase();
+      if (!files.some(function (x) { return x.toLowerCase() === canon; })) files.push(f);
+    });
+    var seenExts = {};
+    files.forEach(function (f) {
+      var dot = f.lastIndexOf('.');
+      if (dot >= 0) seenExts[f.slice(dot).toLowerCase()] = true;
+    });
+    var extOnly = r.match(/\.(?:csv|tsv|json|jsonl|xml|yaml|yml|toml|html|css|js|ts|tsx|jsx|py|rb|go|rs|java|kt|swift|c|cpp|h|hpp|sh|sql|pdf|docx|xlsx)\b/gi) || [];
+    extOnly.forEach(function (f) {
+      var canon = f.toLowerCase();
+      if (seenExts[canon]) return; // covered by a named file already
       if (!files.some(function (x) { return x.toLowerCase() === canon; })) files.push(f);
     });
     files = files.slice(0, 5);
@@ -1803,6 +1819,336 @@ window.HailMaryEngine = (function () {
     });
 
     return { tech: tech, files: files, numbers: numbers };
+  }
+
+  // Concept library — keyword matches in the user's raw prompt drive
+  // task-specific elaborations.  Each concept contributes 3–6 concrete
+  // sub-requirements that the rewritten prompt must address.  This is what
+  // turns "write me a python script to dedupe a CSV" into a paragraph that
+  // explicitly mentions CLI args, encoding, quoted-field parsing, header
+  // handling, malformed-row recovery, and large-file streaming — instead
+  // of a generic "Engineer X to a production-grade standard."
+  var RW_CONCEPTS = [
+    // ── code / engineering ────────────────────────────────────────────
+    { match: /\b(script|cli|command[- ]?line|tool|utility)\b/i, label: 'CLI tool',
+      elabs: ['CLI argument parsing with --help and sensible defaults',
+              'exit codes (0 = success, distinct non-zero codes per error class)',
+              '--dry-run / --verbose flags where they make sense',
+              'graceful handling of Ctrl-C / SIGTERM mid-operation'] },
+    { match: /\b(function|method|procedure|routine)\b/i, label: 'function',
+      // Only fire for code/general — "the function f(x) = ..." in a math
+      // context shouldn't get input/output-contract elabs.
+      tasks: ['code', 'general'],
+      elabs: ['explicit input and return-type contract',
+              'fail-fast input validation with informative error messages',
+              'pure where possible; document any side effects or I/O',
+              'edge-case behavior: empty, null, boundary, concurrent, malformed'] },
+    { match: /\b(class|object|struct|entity|component)\b/i, label: 'type',
+      tasks: ['code', 'general'],
+      elabs: ['public surface area and invariants stated up front',
+              'constructor preconditions',
+              'distinction between mutating and pure methods',
+              'equality, hashing, and serialization semantics'] },
+    { match: /\b(test|tests|testing|unit\s+test|integration\s+test|e2e|qa)\b/i, label: 'tests',
+      elabs: ['arrange/act/assert structure, one behavior per test',
+              'realistic test data — not random gibberish',
+              'failure messages that say expected vs. actual concretely',
+              'no shared mutable state between tests',
+              'coverage of the boring edge cases (empty, single, very large)'] },
+    { match: /\b(refactor|cleanup|restructure|tidy)\b/i, label: 'refactor',
+      elabs: ['behavior preservation: every existing test must still pass',
+              'small, independently shippable steps',
+              'a before/after diff that is easy to review',
+              'no opportunistic feature additions inside the refactor'] },
+    { match: /\b(debug|debugging|bug|issue|fix|broken|crash|error)\b/i, label: 'debug',
+      elabs: ['minimal reproduction steps',
+              'expected vs. observed behavior, exactly',
+              'narrowed-down hypothesis with the evidence that supports it',
+              'the smallest fix that addresses the root cause (not the symptom)',
+              'a regression test that fails before the fix and passes after'] },
+
+    // ── data formats ─────────────────────────────────────────────────
+    { match: /\b(csv|tsv)\b/i, label: 'CSV',
+      elabs: ['encoding handling (default utf-8 with errors="replace")',
+              'quoted-field parsing for embedded commas and newlines',
+              'header detection or an explicit header argument',
+              'malformed-row recovery: warn-and-skip by default, --strict to fail fast',
+              'streaming for files larger than memory'] },
+    { match: /\b(json|jsonl|ndjson)\b/i, label: 'JSON',
+      elabs: ['schema validation up front',
+              'clear error messages that point at the offending field path',
+              'pretty-printed output with stable key ordering',
+              'streaming parser for jsonl / very large payloads'] },
+    { match: /\b(yaml|yml|toml)\b/i, label: 'config file',
+      elabs: ['schema validation with helpful error locations',
+              'support for environment-variable interpolation if used',
+              'documented required vs. optional fields'] },
+    { match: /\b(xml|html|dom|xpath)\b/i, label: 'markup',
+      elabs: ['namespace handling',
+              'whitespace-significance assumptions stated explicitly',
+              'a real parser — never regex — for nested structures'] },
+
+    // ── networking / APIs ─────────────────────────────────────────────
+    { match: /\b(api|endpoint|rest|graphql|webhook|http|grpc)\b/i, label: 'API',
+      elabs: ['authentication and authorization model',
+              'rate-limit handling with exponential backoff and jitter',
+              'idempotency tokens for safe retries',
+              'request and response schema validation',
+              'structured error responses with stable error codes'] },
+    { match: /\b(websocket|sse|long[- ]poll|streaming)\b/i, label: 'streaming',
+      elabs: ['reconnection strategy with backoff',
+              'message ordering and dedup guarantees',
+              'backpressure handling',
+              'heartbeat / liveness signal'] },
+    { match: /\b(scrape|scraping|crawler|crawl|spider)\b/i, label: 'scraper',
+      elabs: ['respect for robots.txt and rate limits',
+              'realistic User-Agent and identifying contact email',
+              'retry on transient failures only; do not hammer 4xx',
+              'structured output schema'] },
+
+    // ── data / storage ───────────────────────────────────────────────
+    { match: /\b(database|db|postgres|postgresql|mysql|mariadb|mongodb|sqlite|redis|dynamodb|cassandra)\b/i, label: 'database',
+      elabs: ['transaction boundaries and isolation level',
+              'parameterized queries — zero string-concatenated SQL',
+              'index strategy aligned with the access pattern',
+              'connection pooling and timeout settings',
+              'migration plan with explicit rollback'] },
+    { match: /\b(query|queries|sql)\b/i, label: 'query',
+      elabs: ['the exact result schema (column names, types)',
+              'estimated cardinality / row count',
+              'index requirements',
+              'EXPLAIN-plan or query-plan considerations'] },
+    { match: /\b(dedup|deduplicate|duplicate|unique|distinct)\b/i, label: 'dedup',
+      elabs: ['definition of "duplicate" — by which columns / fields',
+              'tie-break: which row wins (first / last / specific column max)',
+              'order-preservation guarantee or explicit non-guarantee',
+              'memory profile: in-memory hash vs. external sort'] },
+    { match: /\b(etl|pipeline|ingest|backfill|batch)\b/i, label: 'pipeline',
+      elabs: ['idempotency and resumability',
+              'batch size and pacing',
+              'failure isolation — one bad record does not kill the run',
+              'observability: per-stage row counts and error rates'] },
+
+    // ── infra / ops ──────────────────────────────────────────────────
+    { match: /\b(deploy|deployment|rollout|release|ship)\b/i, label: 'deployment',
+      elabs: ['environment matrix (dev / staging / prod)',
+              'rollback plan executable in under 5 minutes',
+              'health checks and smoke tests',
+              'feature-flag or canary strategy',
+              'observability: metrics, logs, traces from day one'] },
+    { match: /\b(docker|container|containerize|dockerfile)\b/i, label: 'container',
+      elabs: ['minimal base image with a pinned tag (no :latest)',
+              'non-root user',
+              'liveness and readiness probes',
+              'resource requests and limits',
+              'image-layer cache friendliness — slow-changing layers first'] },
+    { match: /\b(kubernetes|k8s|helm|kustomize)\b/i, label: 'kubernetes',
+      elabs: ['namespace strategy',
+              'resource requests and limits',
+              'pod disruption budgets',
+              'horizontal pod autoscaling thresholds',
+              'secrets via a real secrets manager — not configmaps'] },
+    { match: /\b(server|service|daemon|microservice|backend)\b/i, label: 'service',
+      elabs: ['startup ordering and graceful shutdown',
+              'health endpoint',
+              'structured logging with correlation IDs',
+              'metrics for latency / error rate / saturation',
+              'configurable port and bind address'] },
+    { match: /\b(replication|cluster|high[- ]availability|failover|ha)\b/i, label: 'HA',
+      elabs: ['leader election and split-brain handling',
+              'replication-lag monitoring and alert threshold',
+              'failover runbook with named owner',
+              'backup-and-restore procedure tested at least quarterly'] },
+    { match: /\b(cache|caching|cdn)\b/i, label: 'cache',
+      elabs: ['cache key shape and TTL',
+              'invalidation strategy',
+              'cold-start behavior',
+              'stampede protection (single-flight or jitter)'] },
+
+    // ── security ─────────────────────────────────────────────────────
+    { match: /\b(security|secure|auth|authentication|authorization|oauth|jwt|saml|sso|2fa|mfa)\b/i, label: 'security',
+      elabs: ['threat model up front',
+              'principle of least privilege',
+              'secrets handling — none in source, all rotated',
+              'token expiration and rotation strategy',
+              'audit logging of every privileged action'] },
+    { match: /\b(encrypt|encryption|crypto|hash|hashing|tls|ssl)\b/i, label: 'crypto',
+      elabs: ['the exact algorithm and parameters (no rolling your own)',
+              'key management: where keys live, how they rotate',
+              'IV/nonce uniqueness guarantee',
+              'constant-time comparison where relevant'] },
+
+    // ── performance ──────────────────────────────────────────────────
+    { match: /\b(performance|optimize|optimization|fast|slow|latency|throughput|benchmark|profile|profiling)\b/i, label: 'performance',
+      elabs: ['baseline measurement before any change',
+              'a single concrete target (e.g., p95 latency, RPS, memory)',
+              'instrumentation strategy',
+              'profiling method that points at evidence, not guesses',
+              'validation that the optimization actually moved the metric'] },
+
+    // ── migration / change management ────────────────────────────────
+    { match: /\b(migration|migrate|upgrade|port|rewrite)\b/i, label: 'migration',
+      elabs: ['schema diff and data diff documented',
+              'downtime budget',
+              'batch size and pacing',
+              'idempotency and resumability',
+              'rollback plan and a forward-fix plan'] },
+
+    // ── ML / AI ──────────────────────────────────────────────────────
+    { match: /\b(ml|machine\s+learning|neural\s+net(?:work)?|llm|fine[- ]?tune|fine[- ]?tuning|train(?:ing)?\s+(?:a|the|on|loop|set|data)|(?:ml|ai|llm)\s+model|model\s+(?:training|tuning|inference|evaluation|architecture)|deep\s+learning|transformer)\b/i, label: 'ML',
+      elabs: ['dataset and split (train / validation / test)',
+              'evaluation metric and a target number',
+              'a baseline to beat',
+              'training-time and compute budget',
+              'failure-mode analysis on the validation set'] },
+    { match: /\b(prompt|prompting|few[- ]shot|chain[- ]of[- ]thought|cot|rag|retrieval)\b/i, label: 'prompt',
+      elabs: ['target task framed unambiguously',
+              'output format (schema or worked example)',
+              '2–3 calibrated few-shot examples spanning easy and edge cases',
+              'evaluation rubric for output quality'] },
+    { match: /\b(embedding|embeddings|vector|semantic\s+search)\b/i, label: 'embeddings',
+      elabs: ['embedding model and dimension',
+              'similarity metric (cosine / dot / euclidean)',
+              'index choice (HNSW / IVF / flat) and recall target',
+              'chunking strategy for long documents'] },
+
+    // ── writing / creative ───────────────────────────────────────────
+    { match: /\b(story|fiction|tale|narrative|novella|novel|chapter)\b/i, label: 'story',
+      elabs: ['POV and tense (first / third-limited / omniscient)',
+              'an inciting incident in the first paragraph',
+              'sensory grounding in 2+ senses per scene',
+              'one specific, original image per scene — no clichés',
+              'consistent voice and emotional through-line'] },
+    { match: /\b(poem|poetry|verse|sonnet|haiku|stanza)\b/i, label: 'poem',
+      elabs: ['form and meter (or explicitly free verse)',
+              'a single dominant image or metaphor',
+              'precise diction; cut every word that does not pull weight',
+              'a turn / volta / shift'] },
+    { match: /\b(essay|article|blog|post|column|op[- ]?ed)\b/i, label: 'essay',
+      elabs: ['a lede that earns the next paragraph',
+              'one clear thesis stated up front',
+              'evidence — not just opinion — for every non-trivial claim',
+              'a memorable closing line'] },
+    { match: /\b(email|reply|response|memo)\b/i, label: 'message',
+      // "message" / "note" alone are too ambiguous (e.g., "a message in a
+      // bottle", "a note on conventions") so we require a sharper trigger.
+      tasks: ['creative', 'persuade', 'general', 'howto', 'summarize'],
+      elabs: ['subject line that previews the ask',
+              'one paragraph per idea',
+              'one explicit ask or call to action',
+              'tone calibrated to the recipient relationship'] },
+    { match: /\b(speech|talk|presentation|pitch|keynote)\b/i, label: 'talk',
+      elabs: ['the single sentence the audience must remember',
+              'opening hook (story, question, or surprising fact)',
+              'three load-bearing points, no more',
+              'a call to action or single ask at the end'] },
+
+    // ── analysis / strategy ─────────────────────────────────────────
+    { match: /\b(report|summary|brief)\b/i, label: 'report',
+      elabs: ['executive-readable TL;DR up top',
+              'evidence section with sources',
+              'recommendation section',
+              'open questions and next steps'] },
+    { match: /\b(analysis|analyse|analyze|study|research|investigation)\b/i, label: 'analysis',
+      elabs: ['explicit hypothesis or question',
+              'data sources and selection method',
+              'methodology, repeatable by a peer',
+              'limitations and threats to validity',
+              'distinction between correlation and causation'] },
+    { match: /\b(strategy|plan|roadmap|playbook|gtm|go[- ]to[- ]market)\b/i, label: 'strategy',
+      elabs: ['the goal and explicit non-goals',
+              '2–3 alternatives genuinely considered',
+              'sequencing and milestones',
+              'leading indicators of success',
+              'kill criteria — when do we stop?'] },
+    { match: /\b(decision|recommendation|choice|pick|choose|vs\.?|versus)\b/i, label: 'decision',
+      elabs: ['decision criteria, weighted',
+              'options scored against the criteria',
+              'the recommended option in one sentence',
+              'risks of the recommendation',
+              'one-way vs. two-way door framing'] },
+    { match: /\b(audit|pentest|security\s+review|code\s+review|smart\s+contract|vulnerability\s+(?:scan|assessment))\b/i, label: 'audit',
+      elabs: ['the explicit checklist or framework being applied (OWASP, SLSA, etc.)',
+              'severity and exploitability rating per finding (CVSS or equivalent)',
+              'concrete reproduction or proof-of-concept for each finding',
+              'remediation recommendation for every finding',
+              'a "no-issues-found" line for areas reviewed and cleared'] },
+    { match: /\b(diagnose|diagnosis|root[- ]cause|rca|postmortem|post[- ]mortem)\b/i, label: 'RCA',
+      elabs: ['timeline of the incident with evidence',
+              'the proximate cause vs. the contributing factors',
+              'the smallest change that would have prevented it',
+              'action items with named owners and due dates'] },
+
+    // ── product / business ──────────────────────────────────────────
+    { match: /\b(churn|retention|engagement|nps|csat|funnel|conversion)\b/i, label: 'metrics',
+      elabs: ['the exact metric definition (numerator / denominator / window)',
+              'segmentation (cohort, plan, geo, channel)',
+              'a comparison baseline (prior period, control group)',
+              'the practical-significance threshold, not just statistical'] },
+    { match: /\b(pricing|price|plan|tier|monetiz)\b/i, label: 'pricing',
+      elabs: ['the value-metric the price scales on',
+              'comparison to 2–3 alternatives in the market',
+              'price-anchoring strategy',
+              'expected impact on retention and conversion'] },
+    { match: /\b(hire|hiring|recruit|interview|onboard)\b/i, label: 'hiring',
+      elabs: ['scope and seniority of the role',
+              'the top 3 outcomes the hire owns',
+              'sourcing channels',
+              'interview signal: what each round is testing'] },
+
+    // ── design ──────────────────────────────────────────────────────
+    { match: /\b(image|picture|photo|graphic|logo|illustration|render)\b/i, label: 'image',
+      elabs: ['composition and focal point',
+              'palette and lighting',
+              'reference / mood-board influences',
+              'output dimensions, format, and aspect ratio'] },
+    { match: /\b(ui|ux|wireframe|mockup|prototype|layout|design\s+(?:system|spec|review|doc))\b/i, label: 'UI/UX',
+      // Bare "design" is too broad ("design a JWT auth flow"); require a
+      // more specific UI/UX trigger.
+      elabs: ['the user job-to-be-done',
+              'happy path in 3 screens or fewer',
+              'error and empty states',
+              'accessibility: keyboard, screen reader, contrast'] },
+
+    // ── math ────────────────────────────────────────────────────────
+    // "series" / "limit" / "matrix" / "vector" alone are too ambiguous
+    // ("Series A funding", "rate limit", "movie matrix", "vector graphics")
+    // so they must be paired with a math context word.
+    { match: /\b(integral|integrate|derivative|differentiate|antiderivative|partial\s+derivative|taylor\s+series|maclaurin\s+series|fourier\s+series|power\s+series|infinite\s+series|matrix\s+(?:multiplication|inverse|determinant|product|equation)|eigenvalue|eigenvector|gradient|jacobian|hessian|tensor|vector\s+space|vector\s+field)\b/i, label: 'math',
+      elabs: ['domain of definition stated explicitly',
+              'every step justified by a named rule',
+              'final answer verified by a second method',
+              'units carried through the calculation'] },
+    { match: /\b(probability|stochastic|random|expectation|variance|bayes)\b/i, label: 'probability',
+      elabs: ['the sample space and event being computed',
+              'independence vs. conditional assumptions stated',
+              'a sanity check (estimation or simulation)'] }
+  ];
+
+  function rwElaborate(raw, a) {
+    if (!raw) return [];
+    var out = [];
+    var seenLabels = {};
+    var task = (a && a.task) || 'general';
+    for (var i = 0; i < RW_CONCEPTS.length; i++) {
+      var c = RW_CONCEPTS[i];
+      if (seenLabels[c.label]) continue;
+      // Concepts with an explicit task whitelist only fire when the
+      // analyzed task is in the list — keeps "function" out of math
+      // outputs and "message" out of "message-in-a-bottle" creative.
+      if (c.tasks && c.tasks.indexOf(task) === -1) continue;
+      if (c.match.test(raw)) {
+        seenLabels[c.label] = true;
+        for (var j = 0; j < c.elabs.length; j++) out.push(c.elabs[j]);
+      }
+      // Cap so we don't bury the user under 50 sub-requirements.  Stop
+      // adding once we have plenty; the most-specific (earlier-matching)
+      // concepts win.
+      if (out.length >= 16) break;
+    }
+    // Trim to a useful working set (8 typical, 12 max for high-depth).
+    var maxItems = (a && a.complexity === 'high') ? 12 : 8;
+    return out.slice(0, maxItems);
   }
 
   function rwOpening(core, a, depth) {
@@ -1838,6 +2184,12 @@ window.HailMaryEngine = (function () {
     // that may survive analyze's Stage B regex when it only matched the
     // wh-/aux-pair ("how do") without consuming the trailing pronoun.
     subject = subject.replace(/^(?:i|we|you|they|one)\s+/i, '');
+    // Strip leftover "the/a (best|easiest|simplest|fastest|right|correct|proper)
+    // way to" / "way of" / "method to" filler that analyze's "what is"
+    // strip leaves behind.  Without this, "what is the best way to deploy X"
+    // becomes "Engineer the best way to deploy X" (verb stacked on filler).
+    subject = subject.replace(/^(?:the|a)\s+(?:best|easiest|simplest|fastest|right|correct|proper|recommended|preferred|standard|typical|usual|common)\s+(?:way|approach|method|process|technique|practice)\s+(?:to|of|for)\s+/i, '');
+    subject = subject.replace(/^(?:the|a)\s+(?:way|approach|method|process)\s+(?:to|of|for)\s+/i, '');
     // Then strip multi-word leading imperatives (longest match wins) so we
     // don't end up with "Engineer me through writing X" or "Distill in depth Y".
     subject = subject.replace(/^(guide me through|explain in depth|reason rigorously about|verify whether|compose a comprehensive piece on|execute a|set up|spin up|stand up|roll out|put together|figure out|work out)\s+/i, '');
@@ -1963,6 +2315,11 @@ window.HailMaryEngine = (function () {
       //    so the task verb prepended below doesn't end up as "Write
       //    production-quality, runnable code for i deploy my app".
       .replace(/^(?:i|we|you|they|one)\s+/i, '')
+      // 3b. Strip "the/a (best|easiest|right|...) way to" / "method to"
+      //     filler so "what is the best way to deploy X" peels cleanly to
+      //     "deploy X" instead of "the best way to deploy X".
+      .replace(/^(?:the|a)\s+(?:best|easiest|simplest|fastest|right|correct|proper|recommended|preferred|standard|typical|usual|common)\s+(?:way|approach|method|process|technique|practice)\s+(?:to|of|for)\s+/i, '')
+      .replace(/^(?:the|a)\s+(?:way|approach|method|process)\s+(?:to|of|for)\s+/i, '')
       // 4. Multi-word imperatives produced by rwNormalize / rwEnrich.
       .replace(/^(?:Guide me through|Investigate and synthesize|Analyze and diagnose|Compose with craft|Strategize|Craft persuasive material on|Distill|Solve and verify|Address with rigor|Engineer|Explain in depth|Reason rigorously about|Verify whether|Compose a comprehensive piece on|Execute a|Demonstrate|Produce|Determine|Work out|Review|Analyze|Set up|Spin up|Stand up|Roll out|Put together|Figure out)\s+/i, '')
       // 5. Single-word imperatives ("build", "fix", "compute", ...).
@@ -2042,10 +2399,40 @@ window.HailMaryEngine = (function () {
           ' rigorously. Lead with the answer, then justify it. Name the assumption the answer most depends on, give one concrete example, and call out one realistic edge case where the answer would not hold.';
     }
 
+    // Content-aware expansion — weave concept-specific demands into the
+    // stealth output so it actually differs from the input by addressing
+    // the specific nouns/verbs the user used (CSV → quoted-field parsing;
+    // API → idempotency; story → POV; etc.).
+    var elabs = rwElaborate(raw, a);
+    if (elabs.length) {
+      rewritten += ' Address all of: ' + rwJoinElabs(elabs);
+    }
+
     rewritten += anchor;
     // No throat-clearing on the way in.
     rewritten = rewritten.replace(/\s{2,}/g, ' ').trim();
     return rewritten;
+  }
+
+  // Format a list of elaboration clauses as one readable sentence.
+  // Goes from ['a', 'b', 'c'] → 'a; b; and c.'
+  function rwJoinElabs(elabs) {
+    if (!elabs || !elabs.length) return '';
+    if (elabs.length === 1) return elabs[0] + '.';
+    if (elabs.length === 2) return elabs[0] + '; and ' + elabs[1] + '.';
+    var head = elabs.slice(0, elabs.length - 1).join('; ');
+    return head + '; and ' + elabs[elabs.length - 1] + '.';
+  }
+
+  // Stage 4b: content-aware expansion of the user's specific prompt.
+  // Detects concrete concepts (CSV, API, deploy, story, RCA, …) in the
+  // raw text and emits a sentence that names every sub-requirement those
+  // concepts demand.  This is what differentiates a real rewrite from
+  // template scaffolding.
+  function rwExpansion(a) {
+    var elabs = rwElaborate(a && a.raw, a);
+    if (!elabs.length) return '';
+    return 'Address all of the following concretely — none of them by gesture: ' + rwJoinElabs(elabs);
   }
 
   function rewritePrompt(a, depth) {
@@ -2060,6 +2447,8 @@ window.HailMaryEngine = (function () {
     // Stage 3–7: layered scaffolding around the cleaned-up core
     var parts = [];
     parts.push(rwOpening(core, a, depth));
+    var expansion = rwExpansion(a);
+    if (expansion) parts.push(expansion);
     parts.push(rwDeliverables(a, depth));
     var spec = rwSpecifics(a, depth);
     if (spec) parts.push(spec);
