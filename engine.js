@@ -1946,10 +1946,16 @@ window.HailMaryEngine = (function () {
         (ent.tech.length === 1 ? ' as a real tool, not a placeholder' : ' as real tools, not placeholders') + '.';
     }
     if (ent.files.length) {
-      anchor += ' Assume ' + ent.files.slice(0, 2).join(' and ') + ' is a real file with realistic content; state your schema assumption explicitly.';
+      var fileList = ent.files.slice(0, 2).join(' and ');
+      anchor += ent.files.length === 1
+        ? ' Assume ' + fileList + ' is a real file with realistic content; state your schema assumption explicitly.'
+        : ' Assume ' + fileList + ' are real files with realistic content; state your schema assumptions explicitly.';
     }
     if (ent.numbers.length) {
-      anchor += ' Honor the concrete numbers (' + ent.numbers.slice(0, 2).join(', ') + ') instead of softening them.';
+      var numList = ent.numbers.slice(0, 2).join(', ');
+      anchor += ent.numbers.length === 1
+        ? ' Honor the concrete number (' + numList + ') instead of softening it.'
+        : ' Honor the concrete numbers (' + numList + ') instead of softening them.';
     }
 
     // Per-task structured rewrites.  Each one is a single paragraph that
