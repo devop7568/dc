@@ -1829,6 +1829,11 @@ window.HailMaryEngine = (function () {
     // "(?:i|we|you)\s+" tail absorbs the implicit subject ("how do I X")
     // so we don't end up with a stray "I" / "we" at the start.
     subject = subject.replace(/^(?:how\s+(?:does|do|did|to|can|could|should|would|will)\s+(?:i|we|you|they|one)?\s*|what\s+(?:is|are|was|were|does|do|did|will|would|should)\s+(?:the\s+best\s+way\s+to\s+|i|we|you)?\s*|why\s+(?:does|do|did|is|are|was|were|will|would|should)\s+(?:i|we|you|they)?\s*|when\s+(?:does|do|did|is|are|will|would|should)\s+(?:i|we|you|they)?\s*|where\s+(?:does|do|did|is|are|can|could|will|should)\s+(?:i|we|you|they)?\s*|which\s+(?:is|are|was|were|does|do)?\s*|who\s+(?:is|are|was|were|does|do|did|created|wrote|built|invented|made)?\s*)/i, '');
+    // Strip "(I/we/you) (want|need|would like) to" modal openers that
+    // analyze's Stage A only partially handles (lowercase-i variants).
+    subject = subject.replace(/^(?:i|we|you|they)\s+(?:want|need|would\s+like|have|wish|hope|plan|try|tried|attempted)\s+(?:to\s+)?/i, '');
+    subject = subject.replace(/^(?:i|we|you|they)['’]?d\s+like\s+(?:to\s+)?/i, '');
+    subject = subject.replace(/^let['’]?s\s+/i, '');
     // Strip leftover pronoun subjects ("I" / "we" / "you" / "they" / "one")
     // that may survive analyze's Stage B regex when it only matched the
     // wh-/aux-pair ("how do") without consuming the trailing pronoun.
@@ -1948,9 +1953,19 @@ window.HailMaryEngine = (function () {
       // 1. Question-form openers ("how to ...", "what is ...", ...).
       //    Optional pronoun tail absorbs the subject ("how do I X").
       .replace(/^(?:how\s+(?:does|do|did|to|can|could|should|would|will)\s+(?:i|we|you|they|one)?\s*|what\s+(?:is|are|was|were|does|do|did|will|would|should)\s+(?:the\s+best\s+way\s+to\s+|i|we|you)?\s*|why\s+(?:does|do|did|is|are|was|were|will|would|should)\s+(?:i|we|you|they)?\s*|when\s+(?:does|do|did|is|are|will|would|should)\s+(?:i|we|you|they)?\s*|where\s+(?:does|do|did|is|are|can|could|will|should)\s+(?:i|we|you|they)?\s*|which\s+(?:is|are|was|were|does|do)?\s*|who\s+(?:is|are|was|were|does|do|did|created|wrote|built|invented|made)?\s*)/i, '')
-      // 2. Multi-word imperatives produced by rwNormalize / rwEnrich.
+      // 2. Strip leading "(I/we/you) (want|need|would like|have|wish) to"
+      //    BEFORE the bare pronoun strip, so "we need to debug X" peels to
+      //    "debug X" rather than "need to debug X".
+      .replace(/^(?:i|we|you|they)\s+(?:want|need|would\s+like|have|wish|hope|plan|try|tried|attempted)\s+(?:to\s+)?/i, '')
+      .replace(/^(?:i|we|you|they)['’]?d\s+like\s+(?:to\s+)?/i, '')
+      .replace(/^let['’]?s\s+/i, '')
+      // 3. Strip leading pronoun subject ("I deploy", "we use", "you can")
+      //    so the task verb prepended below doesn't end up as "Write
+      //    production-quality, runnable code for i deploy my app".
+      .replace(/^(?:i|we|you|they|one)\s+/i, '')
+      // 4. Multi-word imperatives produced by rwNormalize / rwEnrich.
       .replace(/^(?:Guide me through|Investigate and synthesize|Analyze and diagnose|Compose with craft|Strategize|Craft persuasive material on|Distill|Solve and verify|Address with rigor|Engineer|Explain in depth|Reason rigorously about|Verify whether|Compose a comprehensive piece on|Execute a|Demonstrate|Produce|Determine|Work out|Review|Analyze|Set up|Spin up|Stand up|Roll out|Put together|Figure out)\s+/i, '')
-      // 3. Single-word imperatives ("build", "fix", "compute", ...).
+      // 5. Single-word imperatives ("build", "fix", "compute", ...).
       .replace(/^(?:write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate|compare|evaluate|plan|debug|diagnose|fix|refactor|migrate|optimize|harden|deploy|test|compute|calculate|draft|outline|prepare|propose|recommend|critique|edit|rewrite|translate)\s+(?:me\s+|us\s+|a\s+|an\s+|the\s+|some\s+|that\s+|it\s+)*/i, '')
       .replace(/[.?!]+$/, '')
       .trim();
