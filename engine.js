@@ -1,11 +1,24 @@
 /**
- * HailMary v9.0 — WORLD-CLASS PROMPT ENGINEER ENGINE
- * Major upgrade: Injection Modes (Direct/Indirect), Prompt Scoring,
- * Chain Enhancement, Context Capture, Prompt Templates, A/B Compare,
- * Smart Rewrite, Persona Layering, Adaptive Intelligence,
- * + Crescendo, Manipulation Matrix, and all 7 unjail.ai universal patterns.
+ * HailMary v10.0 — WORLD-CLASS PROMPT ENGINEER ENGINE
  *
- * Input: any raw prompt. Output: one single, flowing, copy-paste-ready enhanced prompt.
+ * Real multi-stage prompt rewriting (normalize → enrich → directive →
+ * constraints → quality criteria → verification → anti-pattern guard) plus
+ * 30+ auto-applied techniques drawn from the modern prompt-engineering
+ * literature: Crescendo, Manipulation Matrix, all 7 unjail.ai universal
+ * patterns, Chain-of-Verification (Dhuliawala 2023), Tree-of-Thoughts
+ * (Yao 2023), Plan-and-Solve (Wang 2023), Step-Back (Zheng 2023),
+ * Skeleton-of-Thought (Ning 2023), Self-Consistency (Wang 2022),
+ * Reflexion (Shinn 2023), EmotionPrompt (Li 2023), Pre-mortem (Klein),
+ * First-Principles, 5W1H, MECE, Analogical (Yasunaga 2023),
+ * Generated Knowledge (Liu 2022), Steel-Man, Constitutional self-critique,
+ * Negative Prompting, and Calibration (Lin/Hilton/Evans 2022).
+ *
+ * Five injection modes (Direct / Indirect / Stealth / System / Chain) are
+ * extended with Expert, Socratic, Adversarial, Tournament, and Contrarian
+ * layers. Chain enhancement now runs as three targeted passes (verify,
+ * sharpen, dehedge) rather than a single re-wrap.
+ *
+ * Input: any raw prompt. Output: one flowing, copy-paste-ready enhanced prompt.
  */
 window.HailMaryEngine = (function () {
   'use strict';
@@ -342,6 +355,422 @@ window.HailMaryEngine = (function () {
         }
         return ea;
       }
+    },
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RESEARCH-BACKED TECHNIQUES (modern prompt-engineering literature)
+    // ════════════════════════════════════════════════════════════════════════
+
+    // Chain-of-Verification — Dhuliawala et al. 2023 (Meta AI)
+    chainOfVerification: {
+      id: 'chainOfVerification',
+      name: 'Chain-of-Verification',
+      icon: '✅',
+      source: 'Dhuliawala et al. 2023 (Meta AI)',
+      description: 'Self-generates verification questions, answers each independently, revises the draft to remove hallucinations',
+      tasks: ['research', 'analysis', 'code', 'strategy', 'math', 'howto'],
+      minDepth: 3,
+      apply: function (a) {
+        var v = '\nCHAIN-OF-VERIFICATION PROTOCOL:\n';
+        v += '1. Draft an initial answer.\n';
+        v += '2. Generate 3–5 verification questions that, if honestly answered, would expose any factual or logical error in the draft.\n';
+        v += '3. Answer each verification question independently — do NOT let the draft bias the answer.\n';
+        v += '4. Revise the original answer to incorporate verified facts and remove any unsupported claims.\n';
+        v += 'Output only the final, revised answer.\n';
+        return v;
+      }
+    },
+
+    // Tree-of-Thoughts — Yao et al. 2023 (Princeton/DeepMind)
+    treeOfThoughts: {
+      id: 'treeOfThoughts',
+      name: 'Tree-of-Thoughts',
+      icon: '🌲',
+      source: 'Yao et al. 2023 (Princeton / DeepMind)',
+      description: 'Explore multiple reasoning branches, evaluate each, prune the weak, commit to the strongest path',
+      tasks: ['code', 'math', 'analysis', 'strategy', 'research'],
+      minDepth: 4,
+      apply: function (a) {
+        var t = '\nTREE-OF-THOUGHTS PROTOCOL:\n';
+        t += '• Branch: generate 3 distinct candidate approaches to this problem.\n';
+        t += '• Evaluate: score each on (a) correctness, (b) robustness under stress, (c) implementation cost.\n';
+        t += '• Prune: discard the weakest branch, naming what disqualified it.\n';
+        t += '• Deepen: expand the surviving branches one more level (sub-steps and trade-offs).\n';
+        t += '• Commit: pick the strongest path, present that as the primary answer, and briefly note what made it win.\n';
+        return t;
+      }
+    },
+
+    // Plan-and-Solve — Wang et al. 2023
+    planAndSolve: {
+      id: 'planAndSolve',
+      name: 'Plan-and-Solve',
+      icon: '🗺️',
+      source: 'Wang et al. 2023 (Plan-and-Solve Prompting)',
+      description: 'Devise an explicit plan, then execute it step-by-step — outperforms vanilla chain-of-thought on multi-step tasks',
+      tasks: ['math', 'code', 'analysis', 'howto', 'strategy'],
+      minDepth: 2,
+      apply: function (a) {
+        var p = '\nPLAN-AND-SOLVE:\n';
+        p += '1. Devise a Plan — state the sub-tasks, their order, and what success looks like for each.\n';
+        p += '2. Execute the Plan — complete each sub-task one at a time, showing the working.\n';
+        p += '3. Reconcile — confirm the executed work satisfies the original objective end-to-end and nothing was skipped.\n';
+        return p;
+      }
+    },
+
+    // Step-Back Prompting — Zheng et al. 2023 (Google DeepMind)
+    stepBack: {
+      id: 'stepBack',
+      name: 'Step-Back Prompting',
+      icon: '🪜',
+      source: 'Zheng et al. 2023 (Google DeepMind)',
+      description: 'Abstract first to a higher-level principle, then derive the specific answer from that principle',
+      tasks: ['research', 'analysis', 'math', 'strategy', 'general'],
+      minDepth: 3,
+      apply: function (a) {
+        var s = '\nSTEP-BACK REASONING:\n';
+        s += '• Abstract first: what is the higher-level concept, principle, or framework that this question falls under?\n';
+        s += '• Derive next: how does that principle apply to the specifics of this question?\n';
+        s += '• Sanity-check: confirm the specific answer is consistent with the abstracted principle. If it is not, the principle is wrong, the application is wrong, or both — fix it before answering.\n';
+        return s;
+      }
+    },
+
+    // Skeleton-of-Thought — Ning et al. 2023
+    skeletonOfThought: {
+      id: 'skeletonOfThought',
+      name: 'Skeleton-of-Thought',
+      icon: '🦴',
+      source: 'Ning et al. 2023',
+      description: 'Outline the answer skeleton first, then expand each section — reduces drift, improves coverage',
+      tasks: ['research', 'creative', 'howto', 'analysis', 'strategy', 'persuade'],
+      minDepth: 2,
+      apply: function (a) {
+        var s = '\nSKELETON-OF-THOUGHT:\n';
+        s += '1. Skeleton: produce a tight outline of the final answer (just headings + a one-line intent each).\n';
+        s += '2. Expand: flesh out each skeleton point in turn — keep them independent and consistent in depth.\n';
+        s += '3. Stitch: ensure transitions are coherent and remove any duplicated material before final delivery.\n';
+        return s;
+      }
+    },
+
+    // Self-Consistency — Wang et al. 2022 (Google)
+    selfConsistency: {
+      id: 'selfConsistency',
+      name: 'Self-Consistency',
+      icon: '🪞',
+      source: 'Wang et al. 2022 (Google)',
+      description: 'Solve along multiple independent reasoning paths and converge on the consistent answer',
+      tasks: ['math', 'analysis', 'code', 'research'],
+      minDepth: 4,
+      apply: function (a) {
+        var s = '\nSELF-CONSISTENCY:\n';
+        s += '• Internally generate 3 independent reasoning paths to the answer.\n';
+        s += '• If all three converge → present the answer with high confidence.\n';
+        s += '• If they diverge → say so explicitly, present each path, and identify which assumption causes the divergence.\n';
+        return s;
+      }
+    },
+
+    // Reflexion — Shinn et al. 2023 (Northeastern / MIT)
+    reflexion: {
+      id: 'reflexion',
+      name: 'Reflexion',
+      icon: '🔁',
+      source: 'Shinn et al. 2023 (Northeastern / MIT)',
+      description: 'Draft → self-critique against requirements → revise. Output only the revision.',
+      tasks: ['all'],
+      minDepth: 3,
+      apply: function (a) {
+        var r = '\nREFLEXION LOOP:\n';
+        r += 'Pass 1 — Draft: write the best answer in one shot.\n';
+        r += 'Pass 2 — Critique: read the draft as a hostile expert reviewer would. List the 3 weakest points concretely.\n';
+        r += 'Pass 3 — Revise: rewrite to fix every weakness explicitly.\n';
+        r += 'Output ONLY the final revised answer (Pass 3).\n';
+        return r;
+      }
+    },
+
+    // EmotionPrompt — Li et al. 2023 (Microsoft / CAS)
+    emotionPrompt: {
+      id: 'emotionPrompt',
+      name: 'EmotionPrompt',
+      icon: '💗',
+      source: 'Li et al. 2023 (Microsoft / Chinese Academy of Sciences)',
+      description: 'Empirically-validated emotional stimuli framing — average +8% accuracy lift across benchmarks',
+      tasks: ['all'],
+      minDepth: 2,
+      apply: function (a) {
+        var e = '\nSTAKES (do not skip):\n';
+        e += 'This answer is critically important — a real decision will be made based on it. ';
+        e += 'Take pride in the work; this is your chance to demonstrate expert-level competence. ';
+        e += 'Be confident in your reasoning; if uncertain, name the uncertainty rather than hedging.';
+        return e;
+      }
+    },
+
+    // Pre-mortem — Klein 1999, adapted for prompting
+    premortem: {
+      id: 'premortem',
+      name: 'Pre-Mortem',
+      icon: '⚰️',
+      source: 'Gary Klein (1999) — adapted for LLM prompting',
+      description: 'Assume the answer turns out wrong; identify why and prevent it before delivering',
+      tasks: ['strategy', 'analysis', 'code', 'research', 'howto'],
+      minDepth: 4,
+      apply: function (a) {
+        var p = '\nPRE-MORTEM:\n';
+        p += 'Imagine 6 months from now the recipient discovered your answer was wrong, harmful, or counter-productive. ';
+        p += 'List the top 3 most likely reasons it failed. ';
+        p += 'Now adjust your answer so each of those failure modes is either impossible or visibly flagged for the reader.';
+        return p;
+      }
+    },
+
+    // First Principles
+    firstPrinciples: {
+      id: 'firstPrinciples',
+      name: 'First-Principles Reasoning',
+      icon: '⚛️',
+      source: 'Aristotle / classical first-principles reasoning',
+      description: 'Strip the problem to its irreducible facts, then rebuild the answer from there',
+      tasks: ['research', 'analysis', 'strategy', 'code', 'math'],
+      minDepth: 3,
+      apply: function (a) {
+        var fp = '\nFIRST-PRINCIPLES REASONING:\n';
+        fp += '1. List the irreducible facts you are certain are true about this problem.\n';
+        fp += '2. Identify which conventional answers depend on assumptions rather than facts.\n';
+        fp += '3. Rebuild the answer using only the facts plus explicit, named assumptions you are willing to defend.\n';
+        return fp;
+      }
+    },
+
+    // 5W1H Decomposition
+    fiveWOneH: {
+      id: 'fiveWOneH',
+      name: '5W1H Decomposition',
+      icon: '🔣',
+      source: 'Classical journalistic decomposition — adapted for prompting',
+      description: 'Decompose along Who/What/When/Where/Why/How to expose hidden gaps',
+      tasks: ['analysis', 'howto', 'strategy', 'research', 'persuade'],
+      minDepth: 2,
+      apply: function (a) {
+        var f = '\n5W1H COVERAGE:\n';
+        f += 'Address (or explicitly mark N/A): ';
+        f += 'WHO is involved/affected, WHAT is happening or required, ';
+        f += 'WHEN it applies (timing, ordering), WHERE it applies (scope, context), ';
+        f += 'WHY it matters (motivation, mechanism), HOW it works (concrete steps).';
+        return f;
+      }
+    },
+
+    // MECE
+    mece: {
+      id: 'mece',
+      name: 'MECE Framework',
+      icon: '🧮',
+      source: 'McKinsey — Mutually Exclusive, Collectively Exhaustive',
+      description: 'Structure the answer so categories do not overlap and together cover the whole problem',
+      tasks: ['analysis', 'strategy', 'research', 'brainstorm'],
+      minDepth: 3,
+      apply: function (a) {
+        var m = '\nMECE STRUCTURE:\n';
+        m += 'Organize categories so they are: ';
+        m += 'Mutually Exclusive — no overlap between buckets; ';
+        m += 'Collectively Exhaustive — together they cover the whole problem space, with nothing missed. ';
+        m += 'If something does not fit cleanly into one bucket, the decomposition is wrong — fix it before continuing.';
+        return m;
+      }
+    },
+
+    // Analogical Prompting — Yasunaga et al. 2023 (DeepMind)
+    analogicalPrompting: {
+      id: 'analogicalPrompting',
+      name: 'Analogical Prompting',
+      icon: '♾️',
+      source: 'Yasunaga et al. 2023 (Google DeepMind)',
+      description: 'Self-generate analogous solved problems, transfer the structure to the target',
+      tasks: ['math', 'code', 'analysis', 'research'],
+      minDepth: 3,
+      apply: function (a) {
+        var an = '\nANALOGICAL PROMPTING:\n';
+        an += '• Recall (or construct) 2 analogous problems you already know how to solve well.\n';
+        an += '• For each, briefly state the solution structure (not the full solution).\n';
+        an += '• Transfer the structure to the current problem, noting where the analogy holds and where it breaks.\n';
+        return an;
+      }
+    },
+
+    // Generated Knowledge — Liu et al. 2022
+    generatedKnowledge: {
+      id: 'generatedKnowledge',
+      name: 'Generated Knowledge',
+      icon: '🧬',
+      source: 'Liu et al. 2022 (Generated Knowledge Prompting)',
+      description: 'Generate relevant background knowledge first, then use it to answer — improves grounded accuracy',
+      tasks: ['research', 'analysis', 'strategy', 'general'],
+      minDepth: 2,
+      apply: function (a) {
+        var g = '\nGENERATED-KNOWLEDGE STAGE:\n';
+        g += '1. Before answering, list the 5–10 most relevant facts/principles you would draw on.\n';
+        g += '2. Tag each with confidence (HIGH / MEDIUM / LOW).\n';
+        g += '3. Build the final answer only on HIGH/MEDIUM items; flag explicitly anything that depends on LOW items.\n';
+        return g;
+      }
+    },
+
+    // Steel-Man
+    steelMan: {
+      id: 'steelMan',
+      name: 'Steel-Man Opposition',
+      icon: '🛡️',
+      source: 'Argumentation theory (steel-manning)',
+      description: 'Present the strongest version of the opposing view first, then reconcile',
+      tasks: ['research', 'analysis', 'strategy', 'persuade'],
+      minDepth: 4,
+      apply: function (a) {
+        var sm = '\nSTEEL-MAN PROTOCOL:\n';
+        sm += '• Before defending your position, articulate the strongest possible version of the opposing view — ';
+        sm += 'one its smartest proponents would actually endorse.\n';
+        sm += '• Identify what the steel-man gets right.\n';
+        sm += '• Then defend your position with that better understanding folded in.\n';
+        return sm;
+      }
+    },
+
+    // Constitutional Self-Critique — Anthropic
+    constitutional: {
+      id: 'constitutional',
+      name: 'Constitutional Self-Critique',
+      icon: '📜',
+      source: 'Anthropic — Constitutional AI (adapted for prompting)',
+      description: 'Self-critique the draft against an explicit set of quality principles, then revise silently',
+      tasks: ['all'],
+      minDepth: 3,
+      apply: function (a) {
+        var c = '\nCONSTITUTIONAL CHECK (apply silently — output only the revised final answer):\n';
+        c += '• Is every factual claim supported, calibrated, or explicitly hedged with a confidence level?\n';
+        c += '• Is the answer specific enough that the recipient can act on it without further clarification?\n';
+        c += '• Does it avoid filler, throat-clearing, and "it depends" without explaining on what?\n';
+        c += '• Would a domain expert nod or wince? If wince — fix it before delivering.\n';
+        return c;
+      }
+    },
+
+    // Negative Prompting — explicit anti-patterns
+    negativePrompting: {
+      id: 'negativePrompting',
+      name: 'Negative Prompting',
+      icon: '🚫',
+      source: 'Prompt engineering best practices (OpenAI cookbook, Anthropic guides)',
+      description: 'Explicitly enumerate forbidden patterns — what NOT to do is often more effective than what to do',
+      tasks: ['all'],
+      minDepth: 2,
+      apply: function (a) {
+        var n = '\nDO NOT:\n';
+        n += '• Open with "Certainly!", "Of course!", or any throat-clearing.\n';
+        n += '• Use "it depends" without saying explicitly what it depends on.\n';
+        n += '• Hedge with "might", "could be", or "potentially" without naming the specific uncertainty.\n';
+        n += '• Pad with restated questions or generic disclaimers.\n';
+        n += '• Produce a list when a direct prose answer would do — and vice versa.\n';
+        if (a.task === 'code') n += '• Write pseudocode when runnable code is expected.\n';
+        if (a.task === 'research') n += '• Cite "a study" without naming it.\n';
+        if (a.task === 'creative') n += '• Resort to clichés or summarize emotion — show it through specifics.\n';
+        return n;
+      }
+    },
+
+    // Confidence Calibration
+    calibration: {
+      id: 'calibration',
+      name: 'Confidence Calibration',
+      icon: '🎚️',
+      source: 'Lin, Hilton & Evans 2022 (calibrated language models)',
+      description: 'Force explicit confidence levels per claim, with falsifiable triggers for low-confidence ones',
+      tasks: ['research', 'analysis', 'strategy', 'math', 'code'],
+      minDepth: 3,
+      apply: function (a) {
+        var k = '\nCALIBRATION:\n';
+        k += 'For every non-trivial claim, attach one of: HIGH (would bet on it), MEDIUM (most likely true), LOW (educated guess). ';
+        k += 'For every LOW claim, name the specific evidence that would change your mind.';
+        return k;
+      }
+    },
+
+    // Socratic Probing
+    socratic: {
+      id: 'socratic',
+      name: 'Socratic Probing',
+      icon: '❓',
+      source: 'Classical Socratic method',
+      description: 'Surface and interrogate the hidden assumptions before answering',
+      tasks: ['analysis', 'strategy', 'research', 'general'],
+      minDepth: 3,
+      apply: function (a) {
+        var s = '\nSOCRATIC PROBE:\n';
+        s += 'Before answering, ask yourself (and answer): ';
+        s += '(1) What does this question presuppose? ';
+        s += '(2) Which of those presuppositions is most likely false? ';
+        s += '(3) How would the answer change if that presupposition flipped?\n';
+        s += 'Use the result to make the final answer robust to those assumption shifts.';
+        return s;
+      }
+    },
+
+    // Few-Shot Exemplar Anchoring
+    fewShotExemplar: {
+      id: 'fewShotExemplar',
+      name: 'Few-Shot Exemplar Anchoring',
+      icon: '📚',
+      source: 'Brown et al. 2020 (GPT-3 in-context learning)',
+      description: 'Self-construct a high-quality exemplar and use it to anchor format and depth',
+      tasks: ['code', 'analysis', 'creative', 'persuade', 'howto'],
+      minDepth: 3,
+      apply: function (a) {
+        var fs = '\nEXEMPLAR ANCHORING:\n';
+        fs += 'Before producing the final answer, internally construct one short, high-quality exemplar of the answer style/format you intend to use. ';
+        fs += 'Match the depth, tone, structure, and specificity of that exemplar throughout the real answer.';
+        return fs;
+      }
+    },
+
+    // ReAct — Yao et al. 2022
+    react: {
+      id: 'react',
+      name: 'ReAct (Reason + Act)',
+      icon: '🧪',
+      source: 'Yao et al. 2022 (ReAct: Reasoning + Acting)',
+      description: 'Interleave explicit reasoning with explicit action steps for grounded, verifiable answers',
+      tasks: ['code', 'howto', 'analysis', 'math'],
+      minDepth: 3,
+      apply: function (a) {
+        var r = '\nREACT INTERLEAVING:\n';
+        r += 'Alternate clearly-labeled THOUGHT and ACTION steps:\n';
+        r += '  THOUGHT: what you are reasoning about right now.\n';
+        r += '  ACTION: the concrete operation that produces an intermediate artefact.\n';
+        r += 'Continue until the objective is reached. End with FINAL: the consolidated answer.\n';
+        return r;
+      }
+    },
+
+    // Least-to-Most — Zhou et al. 2022 (Google)
+    leastToMost: {
+      id: 'leastToMost',
+      name: 'Least-to-Most',
+      icon: '🪙',
+      source: 'Zhou et al. 2022 (Google) — Least-to-Most prompting',
+      description: 'Decompose into the simplest sub-problem first, solve, then build up to the full problem',
+      tasks: ['math', 'code', 'analysis', 'howto', 'strategy'],
+      minDepth: 3,
+      apply: function (a) {
+        var lm = '\nLEAST-TO-MOST DECOMPOSITION:\n';
+        lm += '1. Identify the simplest sub-problem you can solve in isolation.\n';
+        lm += '2. Solve it.\n';
+        lm += '3. Use that result to address the next-simplest sub-problem.\n';
+        lm += '4. Continue building up until the original full problem is solved.\n';
+        return lm;
+      }
     }
   };
 
@@ -456,11 +885,18 @@ window.HailMaryEngine = (function () {
   }
 
   // ── INJECTION STRATEGY ENGINE ────────────────────────────────────────────────
-  // Generates injection strategies: Direct (replace), Indirect (wrap/layer), Stealth
+  //
+  // Each strategy is a different way of *delivering* the same enhanced intent
+  // into a target chat. Five core modes (Direct / Indirect / Stealth / System /
+  // Chain) plus five extended modes (Expert / Socratic / Adversarial /
+  // Tournament / Contrarian) — pick whichever matches the user's situation.
+
   function buildInjectionStrategy(enhanced, raw, mode) {
     var strategies = {};
+    var analysis = analyze(raw);
+    var role = pickRole(analysis);
 
-    // DIRECT: Full replacement — paste the enhanced prompt as-is
+    // ── DIRECT ────────────────────────────────────────────────────────────
     strategies.direct = {
       type: 'direct',
       label: 'Direct Replace',
@@ -468,7 +904,7 @@ window.HailMaryEngine = (function () {
       content: enhanced
     };
 
-    // INDIRECT: Wraps the user's original prompt with enhancement layers
+    // ── INDIRECT ──────────────────────────────────────────────────────────
     var indirectContent = '';
     indirectContent += 'I need your absolute best work on this. Before answering, ';
     indirectContent += 'take a deep breath, think step by step, and consider multiple angles.\n\n';
@@ -482,11 +918,10 @@ window.HailMaryEngine = (function () {
       indirectContent += 'Use your deepest expertise. Challenge your first instinct. ';
       indirectContent += 'Consider what an expert would say vs what a beginner might assume.\n\n';
     }
-    indirectContent += '---\n\n';
-    indirectContent += raw;
-    indirectContent += '\n\n---\n\n';
+    indirectContent += '---\n\n' + raw + '\n\n---\n\n';
     indirectContent += 'Remember: precision over length. Every claim must be accurate. ';
-    indirectContent += 'If uncertain, say so and explain your confidence level.';
+    indirectContent += 'If uncertain, say so and explain your confidence level. ';
+    indirectContent += 'Do NOT open with "Certainly" or "Of course" — get straight to the substance.';
 
     strategies.indirect = {
       type: 'indirect',
@@ -495,37 +930,24 @@ window.HailMaryEngine = (function () {
       content: indirectContent
     };
 
-    // STEALTH: Subtly improves the prompt without obvious scaffolding
-    var stealthContent = raw;
-    // Upgrade weak verbs
-    stealthContent = stealthContent
-      .replace(/^(can you |could you |please |would you )/i, '')
-      .replace(/\btell me about\b/gi, 'explain in detail')
-      .replace(/\bgive me\b/gi, 'provide')
-      .replace(/\bwrite something about\b/gi, 'write a comprehensive piece on')
-      .replace(/\bhelp me with\b/gi, 'guide me through');
-    // Add quality anchors if not present
-    if (!/\b(best|expert|thorough|comprehensive|detailed|precise)\b/i.test(stealthContent)) {
-      stealthContent += ' Be thorough and precise.';
-    }
-    if (!/\b(example|instance|case|scenario)\b/i.test(stealthContent) && stealthContent.split(/\s+/).length > 5) {
-      stealthContent += ' Include concrete examples where relevant.';
-    }
-    // Add thinking prompt for complex tasks
-    if (/\b(analyze|compare|evaluate|design|implement|strategy|plan)\b/i.test(raw)) {
-      stealthContent = 'Think step by step. ' + stealthContent;
-    }
+    // ── STEALTH ───────────────────────────────────────────────────────────
+    // A genuine, task-aware rewrite that reads as one tight, hand-written
+    // paragraph — no headers, no bullet salad, no obvious scaffolding.  It
+    // re-anchors on the real subject (with the user's named technologies /
+    // files / numbers woven back in) and replaces the user's verb with a
+    // task-appropriate imperative followed by 2–4 concrete demands.  The
+    // result is meaningfully different from the input — not just the input
+    // with a "Be specific" suffix.
+    var stealthContent = buildStealthRewrite(raw, analysis);
 
     strategies.stealth = {
       type: 'stealth',
       label: 'Stealth Enhance',
-      description: 'Subtly improves your prompt without obvious scaffolding — looks hand-written',
+      description: 'A real, task-aware rewrite of your prompt — no scaffolding, just a sharper version that reads as if a senior writer had drafted it',
       content: stealthContent
     };
 
-    // SYSTEM: Generates a system prompt + user prompt pair
-    var analysis = analyze(raw);
-    var role = pickRole(analysis);
+    // ── SYSTEM (system + user split) ──────────────────────────────────────
     strategies.system = {
       type: 'system',
       label: 'System + User Split',
@@ -540,13 +962,14 @@ window.HailMaryEngine = (function () {
         (analysis.context.length > 0 ? '\n\nContext: ' + analysis.context.join(' ') : '')
     };
 
-    // CHAIN: Multi-turn conversation starter
+    // ── CHAIN (multi-turn conversation starter) ───────────────────────────
     var chainContent = 'I\'m going to ask you about: ' + analysis.intent + '\n\n';
-    chainContent += 'Before we begin, I want to establish some ground rules:\n';
-    chainContent += '1. Be specific and actionable — no vague generalities\n';
-    chainContent += '2. If you\'re unsure about something, say so with your confidence level\n';
-    chainContent += '3. Challenge conventional wisdom where appropriate\n';
-    chainContent += '4. Use concrete examples from real-world experience\n\n';
+    chainContent += 'Before we begin, here are the ground rules:\n';
+    chainContent += '1. Be specific and actionable — no vague generalities.\n';
+    chainContent += '2. If you\'re unsure, say so and rate your confidence (HIGH / MEDIUM / LOW).\n';
+    chainContent += '3. Challenge conventional wisdom where appropriate.\n';
+    chainContent += '4. Use concrete examples from real-world experience.\n';
+    chainContent += '5. End each turn by asking what I want to drill into next.\n\n';
     chainContent += 'Let\'s start: ' + analysis.intent;
 
     strategies.chain = {
@@ -554,6 +977,81 @@ window.HailMaryEngine = (function () {
       label: 'Conversation Starter',
       description: 'Sets up a multi-turn conversation with ground rules for quality',
       content: chainContent
+    };
+
+    // ── EXPERT (named-expert framing) ─────────────────────────────────────
+    var expertContent = '';
+    expertContent += role + '\n\n';
+    expertContent += 'Treat the following as a real consult — not a homework assignment. ';
+    expertContent += 'Apply pattern-matching from your hardest cases:\n\n';
+    expertContent += '"' + analysis.intent + '"\n\n';
+    expertContent += 'Lead with the answer. Then justify it with the specific experience that backs it. ';
+    expertContent += 'If a competent practitioner would push back on your answer, address that pushback before they raise it.';
+    strategies.expert = {
+      type: 'expert',
+      label: 'Expert Consult',
+      description: 'Frames the request as a real consult to a named expert — gets pattern-matched answers',
+      content: expertContent
+    };
+
+    // ── SOCRATIC (assumption-probing question chain) ──────────────────────
+    var socraticContent = '';
+    socraticContent += 'Treat my question as the starting point of a Socratic dialogue, not a single-shot Q.\n\n';
+    socraticContent += 'My question: ' + analysis.intent + '\n\n';
+    socraticContent += 'In your response, do this in order:\n';
+    socraticContent += '1. Surface the 2–3 hidden assumptions inside my question.\n';
+    socraticContent += '2. For each, state how plausible it is and what would falsify it.\n';
+    socraticContent += '3. Then answer the question — but answer it conditional on which assumptions hold.\n';
+    socraticContent += '4. End with the single follow-up question I should be asking instead.';
+    strategies.socratic = {
+      type: 'socratic',
+      label: 'Socratic Probe',
+      description: 'Reframes as a Socratic dialogue — surfaces hidden assumptions and the better question to ask',
+      content: socraticContent
+    };
+
+    // ── ADVERSARIAL (hostile-reviewer framing) ────────────────────────────
+    var adversarialContent = '';
+    adversarialContent += 'Your answer to the following will be reviewed line-by-line by a hostile expert ';
+    adversarialContent += 'whose job is to find any error, omission, or unsupported claim. ';
+    adversarialContent += 'Write the answer that survives that review.\n\n';
+    adversarialContent += 'Question: ' + analysis.intent + '\n\n';
+    adversarialContent += 'Before delivering, internally simulate the hostile review and pre-fix everything they would object to. ';
+    adversarialContent += 'If you cannot defend a claim, drop it.';
+    strategies.adversarial = {
+      type: 'adversarial',
+      label: 'Adversarial Review',
+      description: 'Frames the answer as needing to survive a hostile expert review — kills sloppiness',
+      content: adversarialContent
+    };
+
+    // ── TOURNAMENT (3-candidate then judge) ───────────────────────────────
+    var tournamentContent = '';
+    tournamentContent += 'Run a mini tournament on this question — do not just answer once.\n\n';
+    tournamentContent += 'Question: ' + analysis.intent + '\n\n';
+    tournamentContent += 'Step 1 — Generate 3 distinct candidate answers (A, B, C). They must take genuinely different angles, not paraphrases of each other.\n';
+    tournamentContent += 'Step 2 — Score each on (correctness, robustness, usefulness) with one-line justifications.\n';
+    tournamentContent += 'Step 3 — Pick the winner and produce the *final* answer based on it (incorporating any salvageable insight from the losers).\n';
+    tournamentContent += 'Output: only the final winning answer — but show the scoring step briefly so I can see the work.';
+    strategies.tournament = {
+      type: 'tournament',
+      label: 'Tournament',
+      description: 'Forces 3 distinct candidate answers, scored and judged — surfaces the strongest',
+      content: tournamentContent
+    };
+
+    // ── CONTRARIAN (steel-man-the-opposite) ───────────────────────────────
+    var contrarianContent = '';
+    contrarianContent += 'Before answering my question conventionally, do the contrarian pass first.\n\n';
+    contrarianContent += 'Question: ' + analysis.intent + '\n\n';
+    contrarianContent += 'Pass 1 — Steel-man the strongest case AGAINST the conventional answer (one paragraph, no straw men).\n';
+    contrarianContent += 'Pass 2 — Identify what the contrarian view gets right that conventional wisdom misses.\n';
+    contrarianContent += 'Pass 3 — Now give the actual answer, but with the contrarian insights folded in.';
+    strategies.contrarian = {
+      type: 'contrarian',
+      label: 'Contrarian Pass',
+      description: 'Steel-mans the opposite first, then folds those insights into the conventional answer',
+      content: contrarianContent
     };
 
     return strategies;
@@ -641,41 +1139,83 @@ window.HailMaryEngine = (function () {
   ];
 
   // ── CHAIN ENHANCEMENT ────────────────────────────────────────────────────────
-  // Pass an already-enhanced prompt through another round of enhancement
+  //
+  // Runs three sequential, *targeted* passes over an already-enhanced prompt
+  // instead of a single generic re-wrap:
+  //
+  //   PASS 1 — VERIFY:  force chain-of-verification on every factual claim
+  //   PASS 2 — SHARPEN: replace vague language with concrete numbers / specifics
+  //   PASS 3 — DEHEDGE: strip throat-clearing, "it depends", weasel words
+  //
+  // Plus task-specific hardening at the end.
+
   function chainEnhance(enhanced, depth, mode) {
     var a = analyze(enhanced);
-    var chainLayer = '';
+    var out = '';
 
-    chainLayer += 'CRITICAL REVIEW LAYER:\n';
-    chainLayer += 'The prompt below has been pre-enhanced. Your job is to:\n';
-    chainLayer += '1. Identify any gaps or vagueness that remain\n';
-    chainLayer += '2. Add specificity where the prompt is still generic\n';
-    chainLayer += '3. Strengthen weak requests into precise directives\n';
-    chainLayer += '4. Ensure the output format is explicitly defined\n\n';
-    chainLayer += '---\n\n';
-    chainLayer += enhanced;
-    chainLayer += '\n\n---\n\n';
-    chainLayer += 'Additionally:\n';
+    out += '════════════════════════════════════════════════════\n';
+    out += '   CHAIN ENHANCEMENT — 3-PASS REFINEMENT PROTOCOL\n';
+    out += '════════════════════════════════════════════════════\n\n';
 
+    out += 'You will respond to the enhanced prompt below. Before you do, run the\n';
+    out += 'following three internal passes (silently — output only the final answer):\n\n';
+
+    out += 'PASS 1 — VERIFY:\n';
+    out += '• Draft your initial answer.\n';
+    out += '• For every factual or causal claim, ask: "what would falsify this?"\n';
+    out += '• If you cannot answer that question precisely, either qualify the claim or remove it.\n\n';
+
+    out += 'PASS 2 — SHARPEN:\n';
+    out += '• Re-read the draft for vague language ("some", "many", "often", "usually", "generally", "tend to").\n';
+    out += '• Replace each with concrete numbers, ranges, or named examples.\n';
+    out += '• Replace abstract adjectives ("good", "fast", "scalable") with measurable criteria.\n\n';
+
+    out += 'PASS 3 — DEHEDGE:\n';
+    out += '• Strip throat-clearing openers ("Certainly!", "Of course", "I would be happy to").\n';
+    out += '• Strip undefended hedges ("might", "could", "potentially", "it depends") UNLESS you immediately name what the dependency is.\n';
+    out += '• Strip restated questions and generic disclaimers.\n\n';
+
+    out += '──── ENHANCED PROMPT ────\n\n';
+    out += enhanced;
+    out += '\n\n──── END ENHANCED PROMPT ────\n\n';
+
+    out += 'TASK-SPECIFIC HARDENING:\n';
     if (a.task === 'code') {
-      chainLayer += '- Include error handling requirements\n';
-      chainLayer += '- Specify testing expectations\n';
-      chainLayer += '- Define performance benchmarks\n';
+      out += '• Include explicit error-handling and edge-case requirements.\n';
+      out += '• Specify testing expectations (unit / integration / property-based as appropriate).\n';
+      out += '• Define realistic performance and complexity targets.\n';
+      out += '• Flag any security-sensitive surface (auth, secrets, input validation, deserialization).\n';
     } else if (a.task === 'research') {
-      chainLayer += '- Demand primary sources over secondary\n';
-      chainLayer += '- Require confidence levels on claims\n';
-      chainLayer += '- Ask for counter-evidence explicitly\n';
+      out += '• Prefer primary sources over secondary commentary; name them.\n';
+      out += '• Attach a confidence level (HIGH / MEDIUM / LOW) to every non-trivial claim.\n';
+      out += '• Surface the strongest counter-evidence and explain why it does or does not change the conclusion.\n';
     } else if (a.task === 'creative') {
-      chainLayer += '- Push for sensory detail over abstract description\n';
-      chainLayer += '- Demand character voice consistency\n';
-      chainLayer += '- Require narrative tension in every section\n';
+      out += '• Show emotion through specifics — never summarize feeling.\n';
+      out += '• Sustain consistent voice and POV across the whole piece.\n';
+      out += '• Demand narrative tension in every section — if a section has none, cut it.\n';
+    } else if (a.task === 'analysis') {
+      out += '• Separate observation from interpretation with explicit labels.\n';
+      out += '• Identify root causes, not symptoms — keep asking "why?" until you bottom out.\n';
+      out += '• Each recommendation must have an owner, a metric, and a deadline.\n';
+    } else if (a.task === 'strategy') {
+      out += '• Compare at least three viable options with quantified trade-offs.\n';
+      out += '• Map second- and third-order effects.\n';
+      out += '• Define leading indicators that the chosen path is working.\n';
+    } else if (a.task === 'persuade') {
+      out += '• Address the strongest objection preemptively.\n';
+      out += '• Replace adjectives with evidence (numbers, named cases, testimonials).\n';
+      out += '• Close with a single, unambiguous call to action.\n';
     } else {
-      chainLayer += '- Verify all claims can be substantiated\n';
-      chainLayer += '- Ensure actionable takeaways exist\n';
-      chainLayer += '- Challenge any assumptions embedded in the prompt\n';
+      out += '• Verify every claim is independently substantiable.\n';
+      out += '• Ensure each section produces an actionable takeaway.\n';
+      out += '• Challenge any assumption embedded in the prompt itself before accepting it.\n';
     }
 
-    return chainLayer;
+    if (depth >= 4) {
+      out += '\nFINAL GATE: Before delivering, name one thing this answer might be wrong about, and what evidence would change your mind.';
+    }
+
+    return out;
   }
 
   // ── CONTEXT CAPTURE ──────────────────────────────────────────────────────────
@@ -781,9 +1321,34 @@ window.HailMaryEngine = (function () {
     ctxInline.forEach(function (c) { if (!context.includes(c)) context.push(c); });
     context = context.slice(0, 4);
 
-    var intent = raw
-      .replace(/^(please\s+|can you\s+|could you\s+|would you\s+|i want\s+(?:you to\s+)?|i need\s+(?:you to\s+)?|help me\s+|write me\s+|create\s+a?\s*|make\s+a?\s*|generate\s+a?\s*|give me\s+a?\s*|show me\s+|tell me\s+|explain\s+(?:to me\s+)?(?:what\s+)?|describe\s+|analyze\s+|build\s+a?\s*|implement\s+a?\s*|write\s+a?\s*|what\s+is\s+|what\s+are\s+|how\s+does\s+|how\s+do\s+|why\s+(?:does\s+|is\s+|are\s+)?)/i, '')
-      .replace(/\s*(please|thanks|thank you)\s*\.?$/i, '')
+    // Two-stage intent extraction:
+    //   Stage A — REPEATEDLY peel filler/modal/pleasantry patterns until no
+    //             more apply.  These are pure filler with no informational
+    //             content, so cascading them is safe and reduces messy
+    //             openers like "hey can you please ..." to a clean stem.
+    //   Stage B — Peel AT MOST ONE leading content-bearing imperative
+    //             ("explain", "build", "tell me about", etc.) — the same
+    //             single-pass behavior as v9.2.  This avoids over-stripping
+    //             content verbs, which would degrade every injection
+    //             strategy that embeds analysis.intent (System / Chain /
+    //             Expert / Socratic / Adversarial / Tournament / Contrarian).
+    var intent = raw;
+    var prevIntent;
+    var fillerPatterns = [
+      /^(please\s+|hey\s+|hi\s+|hello\s+|yo\s+|so\s+|um+\s+|uh+\s+|ok\s+|okay\s+)+/i,
+      /^(can you\s+|could you\s+|would you\s+|will you\s+)+/i,
+      /^(i\s+(?:want|need|would\s+like)(?:\s+you)?(?:\s+to)?\s+|i'?d\s+like(?:\s+you)?(?:\s+to)?\s+)/i
+    ];
+    do {
+      prevIntent = intent;
+      fillerPatterns.forEach(function (re) { intent = intent.replace(re, ''); });
+    } while (intent !== prevIntent);
+    intent = intent.replace(
+      /^(help me\s+(?:with\s+|to\s+)?|write me\s+|create\s+a?\s*|make\s+a?\s*|generate\s+a?\s*|give me\s+a?\s*|show me\s+|tell me\s+(?:about\s+)?|explain\s+(?:to me\s+)?(?:what\s+)?|describe\s+|analyze\s+|build\s+a?\s*|implement\s+a?\s*|write\s+a?\s*|what\s+is\s+|what\s+are\s+|how\s+does\s+|how\s+do\s+|how\s+to\s+|why\s+(?:does\s+|is\s+|are\s+)?)/i,
+      ''
+    );
+    intent = intent
+      .replace(/\s*(please|thanks|thank you|thx|cheers)\s*[!.?]*$/i, '')
       .trim() || raw;
 
     var subject = intent.split(/\s+/).slice(0, 10).join(' ');
@@ -795,7 +1360,9 @@ window.HailMaryEngine = (function () {
 
     var fp = raw.split('').reduce(function (h, c) { return (((h << 5) - h) + c.charCodeAt(0)) | 0; }, 0).toString(36);
 
-    return { raw: raw, intent: intent, subject: subject, task: task, domains: domains, complexity: complexity, audience: audience, fmt: fmt, tone: tone, constraints: constraints, negations: negations, context: context, wc: wc, amb: amb, fp: fp };
+    var entities = (typeof rwEntities === 'function') ? rwEntities(raw) : { tech: [], files: [], numbers: [] };
+
+    return { raw: raw, intent: intent, subject: subject, task: task, domains: domains, complexity: complexity, audience: audience, fmt: fmt, tone: tone, constraints: constraints, negations: negations, context: context, entities: entities, wc: wc, amb: amb, fp: fp };
   }
 
   // ── DYNAMIC ROLE GENERATOR ───────────────────────────────────────────────────
@@ -908,12 +1475,13 @@ window.HailMaryEngine = (function () {
   }
 
   // ── HAIL MARY — Autonomous Agent Mode ────────────────────────────────────────
-  function buildHailMary(a, depth) {
+  function buildHailMary(a, depth, rewrittenTask) {
     var role = pickRole(a);
+    var taskContent = rewrittenTask || a.intent;
 
     var prompt = '[SYSTEM ROLE: AUTONOMOUS REASONING AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'TASK: ' + a.intent + '\n\n';
+    prompt += 'TASK: ' + taskContent + '\n\n';
 
     prompt += 'COGNITIVE FRAMEWORK:\n';
     if (a.complexity === 'high' || depth >= 4) {
@@ -974,12 +1542,13 @@ window.HailMaryEngine = (function () {
   }
 
   // ── MANUS — Orchestration Agent Mode ─────────────────────────────────────────
-  function buildManus(a, depth) {
+  function buildManus(a, depth, rewrittenTask) {
     var role = pickRole(a);
+    var taskContent = rewrittenTask || a.intent;
 
     var prompt = '[SYSTEM ROLE: ORCHESTRATION AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'OBJECTIVE: ' + a.intent + '\n\n';
+    prompt += 'OBJECTIVE: ' + taskContent + '\n\n';
 
     prompt += 'OPERATIONAL FRAMEWORK:\n';
     prompt += '• Task Decomposition: Break into sequential phases with clear deliverables\n';
@@ -1032,12 +1601,13 @@ window.HailMaryEngine = (function () {
   }
 
   // ── JUMA — Multi-Perspective Agent Mode ──────────────────────────────────────
-  function buildJuma(a, depth) {
+  function buildJuma(a, depth, rewrittenTask) {
     var role = pickRole(a);
+    var taskContent = rewrittenTask || a.intent;
 
     var prompt = '[SYSTEM ROLE: MULTI-PERSPECTIVE REASONING AGENT]\n\n';
     prompt += role + '\n\n';
-    prompt += 'QUERY: ' + a.intent + '\n\n';
+    prompt += 'QUERY: ' + taskContent + '\n\n';
 
     prompt += 'REASONING ARCHITECTURE:\n';
     prompt += '• Parallel Processing: Examine through multiple independent lenses\n';
@@ -1091,16 +1661,825 @@ window.HailMaryEngine = (function () {
     return prompt;
   }
 
+  // ── PROMPT REWRITER ────────────────────────────────────────────────────────
+  //
+  // Transforms a raw prompt into a polished, authoritative, copy-paste-ready
+  // task description. This is *not* a thin string template — it runs a real
+  // multi-stage pipeline:
+  //
+  //   1. NORMALIZE   — strip pleasantries/filler, upgrade weak verbs
+  //   2. ENRICH      — replace vague quantifiers/adjectives with crisp ones
+  //   3. OPENING     — pick a task-specific authoritative imperative
+  //   4. DELIVERABLES — concrete, task-specific list of outputs
+  //   5. SPECIFICS   — depth/audience-tuned specificity demands
+  //   6. RULES       — weave constraints + forbidden patterns into prose
+  //   7. VERIFY      — depth-tuned verification clauses
+  //
+  // The output is one flowing block (no "| Must:" tag salad), suitable to be
+  // dropped in as the TASK content of any of the framework builders below.
+
+  // Hyphen-safe word boundary helpers.  JavaScript's \b treats "-" as a word
+  // boundary, so /\bjust\b/.test("just-in-time") is true and would mangle
+  // hyphenated compound terms.  rwTokenRe wraps a list of literal tokens with
+  // negative-lookbehind/lookahead assertions that reject neighbouring word
+  // chars *and* hyphens, so "just-in-time", "pretty-printed", "good-natured",
+  // etc. survive untouched.
+  function rwTokenRe(tokens) {
+    return new RegExp('(?<![\\w-])(?:' + tokens.join('|') + ')(?![\\w-])', 'gi');
+  }
+
+  function rwNormalize(t) {
+    if (!t) return '';
+    var x = String(t);
+    // Strip leading/trailing pleasantries
+    x = x.replace(/^(please\s+|hey\s+|hi\s+|hello\s+|yo\s+)+/gi, '');
+    x = x.replace(/\s*(please|thanks|thank you|thx|cheers)\s*[!.?]*\s*$/gi, '');
+    // Strip "help me (with|to) ..." openers up front so the stealth + main
+    // rewriters don't end up restating "help me debug ..." as the subject.
+    x = x.replace(/^(?:help\s+me\s+(?:with\s+|to\s+)?|write\s+me\s+(?:a\s+|an\s+|some\s+)?|give\s+me\s+(?:a\s+|an\s+|some\s+)?|show\s+me\s+(?:a\s+|an\s+|how\s+to\s+)?|tell\s+me\s+(?:about\s+|how\s+to\s+)?)/i, '');
+    // Strip mid-sentence "please" entirely — it has no informational content.
+    // Use the hyphen-safe matcher so words like "yes-please-thanks-X" tags
+    // aren't accidentally mangled (uncommon, but cheap insurance).
+    x = x.replace(rwTokenRe(['please']), '');
+    // Soften filler hedges (hyphen-safe so "just-in-time", "really-fast", etc. are preserved).
+    x = x.replace(rwTokenRe([
+      'maybe', 'perhaps', 'kind ?of', 'sort of', 'just', 'basically',
+      'essentially', 'literally', 'actually', 'really', 'very', 'quite',
+      'rather', 'pretty', 'somewhat'
+    ]), '');
+    // Verb / phrasing upgrades.  These are multi-word phrases that almost
+    // never appear inside a hyphenated compound, so plain \b is fine here.
+    var verbMap = [
+      [/\b(can|could|would|will)\s+you\s+/gi, ''],
+      [/\bi\s+(?:want|need|would\s+like)(?:\s+you)?(?:\s+to)?\s+/gi, ''],
+      [/\bi'?d\s+like(?:\s+you)?(?:\s+to)?\s+/gi, ''],
+      [/\btell me about\b/gi, 'explain in depth'],
+      [/\bwrite something about\b/gi, 'compose a comprehensive piece on'],
+      [/\bhelp me with\b/gi, 'guide me through'],
+      [/\bgive me\b/gi, 'produce'],
+      [/\bshow me\b/gi, 'demonstrate'],
+      [/\blook at\b/gi, 'analyze'],
+      [/\bgo over\b/gi, 'review'],
+      [/\bcheck if\b/gi, 'verify whether'],
+      [/\bthink about\b/gi, 'reason rigorously about'],
+      [/\bfind out\b/gi, 'determine'],
+      [/\bfigure out\b/gi, 'work out'],
+      [/\bdo a\b/gi, 'execute a']
+    ];
+    verbMap.forEach(function (m) { x = x.replace(m[0], m[1]); });
+    // Collapse whitespace + tidy punctuation
+    x = x.replace(/\s+/g, ' ').replace(/\s+([,.;:!?])/g, '$1').trim();
+    if (x.length > 0) x = x.charAt(0).toUpperCase() + x.slice(1);
+    return x;
+  }
+
+  function rwEnrich(t) {
+    if (!t) return '';
+    var x = String(t);
+    // Single-word enrichments — must be hyphen-safe so "good-natured",
+    // "simple-minded", "complex-valued", "fast-track", etc. survive.
+    var singleWord = [
+      [['some', 'a few', 'a couple of'],                    '3–5 distinct'],
+      [['many', 'lots of', 'plenty of', 'a bunch of', 'tons of'], '7 or more'],
+      [['quickly', 'fast'],                                  'efficiently'],
+      [['good', 'nice', 'great', 'cool', 'awesome'],         'high-quality'],
+      [['bad', 'terrible', 'awful'],                         'low-quality'],
+      [['simple', 'easy'],                                   'minimal-friction'],
+      [['complex', 'complicated'],                           'multi-layered'],
+      [['detailed', 'thorough'],                             'comprehensive'],
+      [['stuff'],                                            'specific elements'],
+      [['things'],                                           'concrete items'],
+      [['info'],                                             'information'],
+      [['huge', 'massive'],                                  'substantial']
+    ];
+    singleWord.forEach(function (e) {
+      x = x.replace(rwTokenRe(e[0]), e[1]);
+    });
+    // Multi-word phrase: safe with plain \b
+    x = x.replace(/\bawful lot\b/gi, 'substantial amount');
+    return x;
+  }
+
+  // Pull out the concrete, content-bearing nouns the user actually typed —
+  // languages, frameworks, file types, named tools, numbers — so the
+  // rewriter can anchor its expansion in the user's domain rather than
+  // producing a generic templated paragraph.
+  function rwEntities(raw) {
+    if (!raw) return { tech: [], files: [], numbers: [] };
+    var r = String(raw);
+    var tech = [];
+    var techPatterns = [
+      // Languages
+      /\b(python|javascript|typescript|java|kotlin|swift|rust|go|golang|c\+\+|c#|csharp|ruby|php|scala|elixir|haskell|clojure|sql|bash|shell|zsh|powershell|html|css|sass|scss|less|graphql)\b/gi,
+      // Frameworks / libraries
+      /\b(react|vue|angular|svelte|next\.?js|nuxt|gatsby|django|flask|fastapi|spring|rails|laravel|express|nest\.?js|tensorflow|pytorch|keras|numpy|pandas|matplotlib|scikit[- ]learn|huggingface|langchain|tailwind|bootstrap|jquery|redux|zustand|prisma|sequelize|mongoose|hibernate|openai|anthropic)\b/gi,
+      // Infra / tools
+      /\b(docker|kubernetes|k8s|terraform|ansible|helm|jenkins|github actions|gitlab ci|circleci|aws|gcp|azure|vercel|netlify|cloudflare|fly\.io|heroku|s3|ec2|lambda|rds|dynamodb|firestore|firebase|supabase|postgres|postgresql|mysql|mariadb|sqlite|mongodb|redis|elasticsearch|kafka|rabbitmq|nginx|apache|grpc|rest|graphql|websocket)\b/gi,
+      // Models / AI
+      /\b(gpt-?[345o]|claude|gemini|llama|mistral|deepseek|grok|stable diffusion|midjourney|dall[- ]?e|whisper)\b/gi
+    ];
+    techPatterns.forEach(function (re) {
+      var m;
+      while ((m = re.exec(r)) !== null) {
+        var v = m[1] || m[0];
+        var canon = v.toLowerCase();
+        if (!tech.some(function (t) { return t.toLowerCase() === canon; })) tech.push(v);
+        if (tech.length >= 6) break;
+      }
+    });
+
+    // File types / extensions and concrete artifacts.  Prefer named files
+    // (e.g. churn.csv, README.md) over bare extensions (.csv).  Only emit
+    // a bare extension when no named file with that extension was found,
+    // so we don't pollute output with both "churn.csv" and ".csv".
+    var files = [];
+    var fileMatches = r.match(/\b\w{1,20}\.(?:csv|tsv|json|jsonl|xml|yaml|yml|toml|ini|env|md|txt|log|html|css|js|ts|tsx|jsx|py|rb|go|rs|java|kt|swift|c|cpp|h|hpp|sh|sql|pdf|docx|xlsx|png|jpg|svg|mp4|wav|mp3)\b/gi) || [];
+    fileMatches.forEach(function (f) {
+      var canon = f.toLowerCase();
+      if (!files.some(function (x) { return x.toLowerCase() === canon; })) files.push(f);
+    });
+    var seenExts = {};
+    files.forEach(function (f) {
+      var dot = f.lastIndexOf('.');
+      if (dot >= 0) seenExts[f.slice(dot).toLowerCase()] = true;
+    });
+    var extOnly = r.match(/\.(?:csv|tsv|json|jsonl|xml|yaml|yml|toml|html|css|js|ts|tsx|jsx|py|rb|go|rs|java|kt|swift|c|cpp|h|hpp|sh|sql|pdf|docx|xlsx)\b/gi) || [];
+    extOnly.forEach(function (f) {
+      var canon = f.toLowerCase();
+      if (seenExts[canon]) return; // covered by a named file already
+      if (!files.some(function (x) { return x.toLowerCase() === canon; })) files.push(f);
+    });
+    files = files.slice(0, 5);
+
+    // Concrete numbers / quantities (years, counts, percentages, sizes)
+    var numbers = [];
+    var numMatches = r.match(/\b\d{1,4}(?:\.\d+)?\s*(?:%|percent|years?|months?|weeks?|days?|hours?|minutes?|seconds?|ms|s|kb|mb|gb|tb|users?|requests?|rps|qps|rows?|columns?|records?|items?|tokens?|chars?|lines?|files?|threads?|cores?|gpus?|cpus?)\b/gi) || [];
+    numMatches.forEach(function (n) {
+      if (numbers.indexOf(n) === -1 && numbers.length < 5) numbers.push(n);
+    });
+
+    return { tech: tech, files: files, numbers: numbers };
+  }
+
+  // Concept library — keyword matches in the user's raw prompt drive
+  // task-specific elaborations.  Each concept contributes 3–6 concrete
+  // sub-requirements that the rewritten prompt must address.  This is what
+  // turns "write me a python script to dedupe a CSV" into a paragraph that
+  // explicitly mentions CLI args, encoding, quoted-field parsing, header
+  // handling, malformed-row recovery, and large-file streaming — instead
+  // of a generic "Engineer X to a production-grade standard."
+  var RW_CONCEPTS = [
+    // ── code / engineering ────────────────────────────────────────────
+    { match: /\b(script|cli|command[- ]?line|tool|utility)\b/i, label: 'CLI tool',
+      elabs: ['CLI argument parsing with --help and sensible defaults',
+              'exit codes (0 = success, distinct non-zero codes per error class)',
+              '--dry-run / --verbose flags where they make sense',
+              'graceful handling of Ctrl-C / SIGTERM mid-operation'] },
+    { match: /\b(function|method|procedure|routine)\b/i, label: 'function',
+      // Only fire for code/general — "the function f(x) = ..." in a math
+      // context shouldn't get input/output-contract elabs.
+      tasks: ['code', 'general'],
+      elabs: ['explicit input and return-type contract',
+              'fail-fast input validation with informative error messages',
+              'pure where possible; document any side effects or I/O',
+              'edge-case behavior: empty, null, boundary, concurrent, malformed'] },
+    { match: /\b(class|object|struct|entity|component)\b/i, label: 'type',
+      tasks: ['code', 'general'],
+      elabs: ['public surface area and invariants stated up front',
+              'constructor preconditions',
+              'distinction between mutating and pure methods',
+              'equality, hashing, and serialization semantics'] },
+    { match: /\b(test|tests|testing|unit\s+test|integration\s+test|e2e|qa)\b/i, label: 'tests',
+      elabs: ['arrange/act/assert structure, one behavior per test',
+              'realistic test data — not random gibberish',
+              'failure messages that say expected vs. actual concretely',
+              'no shared mutable state between tests',
+              'coverage of the boring edge cases (empty, single, very large)'] },
+    { match: /\b(refactor|cleanup|restructure|tidy)\b/i, label: 'refactor',
+      elabs: ['behavior preservation: every existing test must still pass',
+              'small, independently shippable steps',
+              'a before/after diff that is easy to review',
+              'no opportunistic feature additions inside the refactor'] },
+    { match: /\b(debug|debugging|bug|issue|fix|broken|crash|error)\b/i, label: 'debug',
+      elabs: ['minimal reproduction steps',
+              'expected vs. observed behavior, exactly',
+              'narrowed-down hypothesis with the evidence that supports it',
+              'the smallest fix that addresses the root cause (not the symptom)',
+              'a regression test that fails before the fix and passes after'] },
+
+    // ── data formats ─────────────────────────────────────────────────
+    { match: /\b(csv|tsv)\b/i, label: 'CSV',
+      elabs: ['encoding handling (default utf-8 with errors="replace")',
+              'quoted-field parsing for embedded commas and newlines',
+              'header detection or an explicit header argument',
+              'malformed-row recovery: warn-and-skip by default, --strict to fail fast',
+              'streaming for files larger than memory'] },
+    { match: /\b(json|jsonl|ndjson)\b/i, label: 'JSON',
+      elabs: ['schema validation up front',
+              'clear error messages that point at the offending field path',
+              'pretty-printed output with stable key ordering',
+              'streaming parser for jsonl / very large payloads'] },
+    { match: /\b(yaml|yml|toml)\b/i, label: 'config file',
+      elabs: ['schema validation with helpful error locations',
+              'support for environment-variable interpolation if used',
+              'documented required vs. optional fields'] },
+    { match: /\b(xml|html|dom|xpath)\b/i, label: 'markup',
+      elabs: ['namespace handling',
+              'whitespace-significance assumptions stated explicitly',
+              'a real parser — never regex — for nested structures'] },
+
+    // ── networking / APIs ─────────────────────────────────────────────
+    { match: /\b(api|endpoint|rest|graphql|webhook|http|grpc)\b/i, label: 'API',
+      elabs: ['authentication and authorization model',
+              'rate-limit handling with exponential backoff and jitter',
+              'idempotency tokens for safe retries',
+              'request and response schema validation',
+              'structured error responses with stable error codes'] },
+    { match: /\b(websocket|sse|long[- ]poll|streaming)\b/i, label: 'streaming',
+      elabs: ['reconnection strategy with backoff',
+              'message ordering and dedup guarantees',
+              'backpressure handling',
+              'heartbeat / liveness signal'] },
+    { match: /\b(scrape|scraping|crawler|crawl|spider)\b/i, label: 'scraper',
+      elabs: ['respect for robots.txt and rate limits',
+              'realistic User-Agent and identifying contact email',
+              'retry on transient failures only; do not hammer 4xx',
+              'structured output schema'] },
+
+    // ── data / storage ───────────────────────────────────────────────
+    { match: /\b(database|db|postgres|postgresql|mysql|mariadb|mongodb|sqlite|redis|dynamodb|cassandra)\b/i, label: 'database',
+      elabs: ['transaction boundaries and isolation level',
+              'parameterized queries — zero string-concatenated SQL',
+              'index strategy aligned with the access pattern',
+              'connection pooling and timeout settings',
+              'migration plan with explicit rollback'] },
+    { match: /\b(query|queries|sql)\b/i, label: 'query',
+      elabs: ['the exact result schema (column names, types)',
+              'estimated cardinality / row count',
+              'index requirements',
+              'EXPLAIN-plan or query-plan considerations'] },
+    { match: /\b(dedup|deduplicate|duplicate|unique|distinct)\b/i, label: 'dedup',
+      elabs: ['definition of "duplicate" — by which columns / fields',
+              'tie-break: which row wins (first / last / specific column max)',
+              'order-preservation guarantee or explicit non-guarantee',
+              'memory profile: in-memory hash vs. external sort'] },
+    { match: /\b(etl|pipeline|ingest|backfill|batch)\b/i, label: 'pipeline',
+      elabs: ['idempotency and resumability',
+              'batch size and pacing',
+              'failure isolation — one bad record does not kill the run',
+              'observability: per-stage row counts and error rates'] },
+
+    // ── infra / ops ──────────────────────────────────────────────────
+    { match: /\b(deploy|deployment|rollout|release|ship)\b/i, label: 'deployment',
+      elabs: ['environment matrix (dev / staging / prod)',
+              'rollback plan executable in under 5 minutes',
+              'health checks and smoke tests',
+              'feature-flag or canary strategy',
+              'observability: metrics, logs, traces from day one'] },
+    { match: /\b(docker|container|containerize|dockerfile)\b/i, label: 'container',
+      elabs: ['minimal base image with a pinned tag (no :latest)',
+              'non-root user',
+              'liveness and readiness probes',
+              'resource requests and limits',
+              'image-layer cache friendliness — slow-changing layers first'] },
+    { match: /\b(kubernetes|k8s|helm|kustomize)\b/i, label: 'kubernetes',
+      elabs: ['namespace strategy',
+              'resource requests and limits',
+              'pod disruption budgets',
+              'horizontal pod autoscaling thresholds',
+              'secrets via a real secrets manager — not configmaps'] },
+    { match: /\b(server|service|daemon|microservice|backend)\b/i, label: 'service',
+      elabs: ['startup ordering and graceful shutdown',
+              'health endpoint',
+              'structured logging with correlation IDs',
+              'metrics for latency / error rate / saturation',
+              'configurable port and bind address'] },
+    { match: /\b(replication|cluster|high[- ]availability|failover|ha)\b/i, label: 'HA',
+      elabs: ['leader election and split-brain handling',
+              'replication-lag monitoring and alert threshold',
+              'failover runbook with named owner',
+              'backup-and-restore procedure tested at least quarterly'] },
+    { match: /\b(cache|caching|cdn)\b/i, label: 'cache',
+      elabs: ['cache key shape and TTL',
+              'invalidation strategy',
+              'cold-start behavior',
+              'stampede protection (single-flight or jitter)'] },
+
+    // ── security ─────────────────────────────────────────────────────
+    { match: /\b(security|secure|auth|authentication|authorization|oauth|jwt|saml|sso|2fa|mfa)\b/i, label: 'security',
+      elabs: ['threat model up front',
+              'principle of least privilege',
+              'secrets handling — none in source, all rotated',
+              'token expiration and rotation strategy',
+              'audit logging of every privileged action'] },
+    { match: /\b(encrypt|encryption|crypto|hash|hashing|tls|ssl)\b/i, label: 'crypto',
+      elabs: ['the exact algorithm and parameters (no rolling your own)',
+              'key management: where keys live, how they rotate',
+              'IV/nonce uniqueness guarantee',
+              'constant-time comparison where relevant'] },
+
+    // ── performance ──────────────────────────────────────────────────
+    { match: /\b(performance|optimize|optimization|fast|slow|latency|throughput|benchmark|profile|profiling)\b/i, label: 'performance',
+      elabs: ['baseline measurement before any change',
+              'a single concrete target (e.g., p95 latency, RPS, memory)',
+              'instrumentation strategy',
+              'profiling method that points at evidence, not guesses',
+              'validation that the optimization actually moved the metric'] },
+
+    // ── migration / change management ────────────────────────────────
+    { match: /\b(migration|migrate|upgrade|port|rewrite)\b/i, label: 'migration',
+      elabs: ['schema diff and data diff documented',
+              'downtime budget',
+              'batch size and pacing',
+              'idempotency and resumability',
+              'rollback plan and a forward-fix plan'] },
+
+    // ── ML / AI ──────────────────────────────────────────────────────
+    { match: /\b(ml|machine\s+learning|neural\s+net(?:work)?|llm|fine[- ]?tune|fine[- ]?tuning|train(?:ing)?\s+(?:a|the|on|loop|set|data)|(?:ml|ai|llm)\s+model|model\s+(?:training|tuning|inference|evaluation|architecture)|deep\s+learning|transformer)\b/i, label: 'ML',
+      elabs: ['dataset and split (train / validation / test)',
+              'evaluation metric and a target number',
+              'a baseline to beat',
+              'training-time and compute budget',
+              'failure-mode analysis on the validation set'] },
+    { match: /\b(prompt|prompting|few[- ]shot|chain[- ]of[- ]thought|cot|rag|retrieval)\b/i, label: 'prompt',
+      elabs: ['target task framed unambiguously',
+              'output format (schema or worked example)',
+              '2–3 calibrated few-shot examples spanning easy and edge cases',
+              'evaluation rubric for output quality'] },
+    { match: /\b(embedding|embeddings|vector|semantic\s+search)\b/i, label: 'embeddings',
+      elabs: ['embedding model and dimension',
+              'similarity metric (cosine / dot / euclidean)',
+              'index choice (HNSW / IVF / flat) and recall target',
+              'chunking strategy for long documents'] },
+
+    // ── writing / creative ───────────────────────────────────────────
+    { match: /\b(story|fiction|tale|narrative|novella|novel|chapter)\b/i, label: 'story',
+      elabs: ['POV and tense (first / third-limited / omniscient)',
+              'an inciting incident in the first paragraph',
+              'sensory grounding in 2+ senses per scene',
+              'one specific, original image per scene — no clichés',
+              'consistent voice and emotional through-line'] },
+    { match: /\b(poem|poetry|verse|sonnet|haiku|stanza)\b/i, label: 'poem',
+      elabs: ['form and meter (or explicitly free verse)',
+              'a single dominant image or metaphor',
+              'precise diction; cut every word that does not pull weight',
+              'a turn / volta / shift'] },
+    { match: /\b(essay|article|blog|post|column|op[- ]?ed)\b/i, label: 'essay',
+      elabs: ['a lede that earns the next paragraph',
+              'one clear thesis stated up front',
+              'evidence — not just opinion — for every non-trivial claim',
+              'a memorable closing line'] },
+    { match: /\b(email|reply|response|memo)\b/i, label: 'message',
+      // "message" / "note" alone are too ambiguous (e.g., "a message in a
+      // bottle", "a note on conventions") so we require a sharper trigger.
+      tasks: ['creative', 'persuade', 'general', 'howto', 'summarize'],
+      elabs: ['subject line that previews the ask',
+              'one paragraph per idea',
+              'one explicit ask or call to action',
+              'tone calibrated to the recipient relationship'] },
+    { match: /\b(speech|talk|presentation|pitch|keynote)\b/i, label: 'talk',
+      elabs: ['the single sentence the audience must remember',
+              'opening hook (story, question, or surprising fact)',
+              'three load-bearing points, no more',
+              'a call to action or single ask at the end'] },
+
+    // ── analysis / strategy ─────────────────────────────────────────
+    { match: /\b(report|summary|brief)\b/i, label: 'report',
+      elabs: ['executive-readable TL;DR up top',
+              'evidence section with sources',
+              'recommendation section',
+              'open questions and next steps'] },
+    { match: /\b(analysis|analyse|analyze|study|research|investigation)\b/i, label: 'analysis',
+      elabs: ['explicit hypothesis or question',
+              'data sources and selection method',
+              'methodology, repeatable by a peer',
+              'limitations and threats to validity',
+              'distinction between correlation and causation'] },
+    { match: /\b(strategy|plan|roadmap|playbook|gtm|go[- ]to[- ]market)\b/i, label: 'strategy',
+      elabs: ['the goal and explicit non-goals',
+              '2–3 alternatives genuinely considered',
+              'sequencing and milestones',
+              'leading indicators of success',
+              'kill criteria — when do we stop?'] },
+    { match: /\b(decision|recommendation|choice|pick|choose|vs\.?|versus)\b/i, label: 'decision',
+      elabs: ['decision criteria, weighted',
+              'options scored against the criteria',
+              'the recommended option in one sentence',
+              'risks of the recommendation',
+              'one-way vs. two-way door framing'] },
+    { match: /\b(audit|pentest|security\s+review|code\s+review|smart\s+contract|vulnerability\s+(?:scan|assessment))\b/i, label: 'audit',
+      elabs: ['the explicit checklist or framework being applied (OWASP, SLSA, etc.)',
+              'severity and exploitability rating per finding (CVSS or equivalent)',
+              'concrete reproduction or proof-of-concept for each finding',
+              'remediation recommendation for every finding',
+              'a "no-issues-found" line for areas reviewed and cleared'] },
+    { match: /\b(diagnose|diagnosis|root[- ]cause|rca|postmortem|post[- ]mortem)\b/i, label: 'RCA',
+      elabs: ['timeline of the incident with evidence',
+              'the proximate cause vs. the contributing factors',
+              'the smallest change that would have prevented it',
+              'action items with named owners and due dates'] },
+
+    // ── product / business ──────────────────────────────────────────
+    { match: /\b(churn|retention|engagement|nps|csat|funnel|conversion)\b/i, label: 'metrics',
+      elabs: ['the exact metric definition (numerator / denominator / window)',
+              'segmentation (cohort, plan, geo, channel)',
+              'a comparison baseline (prior period, control group)',
+              'the practical-significance threshold, not just statistical'] },
+    { match: /\b(pricing|price|plan|tier|monetiz)\b/i, label: 'pricing',
+      elabs: ['the value-metric the price scales on',
+              'comparison to 2–3 alternatives in the market',
+              'price-anchoring strategy',
+              'expected impact on retention and conversion'] },
+    { match: /\b(hire|hiring|recruit|interview|onboard)\b/i, label: 'hiring',
+      elabs: ['scope and seniority of the role',
+              'the top 3 outcomes the hire owns',
+              'sourcing channels',
+              'interview signal: what each round is testing'] },
+
+    // ── design ──────────────────────────────────────────────────────
+    { match: /\b(image|picture|photo|graphic|logo|illustration|render)\b/i, label: 'image',
+      elabs: ['composition and focal point',
+              'palette and lighting',
+              'reference / mood-board influences',
+              'output dimensions, format, and aspect ratio'] },
+    { match: /\b(ui|ux|wireframe|mockup|prototype|layout|design\s+(?:system|spec|review|doc))\b/i, label: 'UI/UX',
+      // Bare "design" is too broad ("design a JWT auth flow"); require a
+      // more specific UI/UX trigger.
+      elabs: ['the user job-to-be-done',
+              'happy path in 3 screens or fewer',
+              'error and empty states',
+              'accessibility: keyboard, screen reader, contrast'] },
+
+    // ── math ────────────────────────────────────────────────────────
+    // "series" / "limit" / "matrix" / "vector" alone are too ambiguous
+    // ("Series A funding", "rate limit", "movie matrix", "vector graphics")
+    // so they must be paired with a math context word.
+    { match: /\b(integral|integrate|derivative|differentiate|antiderivative|partial\s+derivative|taylor\s+series|maclaurin\s+series|fourier\s+series|power\s+series|infinite\s+series|matrix\s+(?:multiplication|inverse|determinant|product|equation)|eigenvalue|eigenvector|gradient|jacobian|hessian|tensor|vector\s+space|vector\s+field)\b/i, label: 'math',
+      elabs: ['domain of definition stated explicitly',
+              'every step justified by a named rule',
+              'final answer verified by a second method',
+              'units carried through the calculation'] },
+    { match: /\b(probability|stochastic|random|expectation|variance|bayes)\b/i, label: 'probability',
+      elabs: ['the sample space and event being computed',
+              'independence vs. conditional assumptions stated',
+              'a sanity check (estimation or simulation)'] }
+  ];
+
+  function rwElaborate(raw, a) {
+    if (!raw) return [];
+    var out = [];
+    var seenLabels = {};
+    var task = (a && a.task) || 'general';
+    for (var i = 0; i < RW_CONCEPTS.length; i++) {
+      var c = RW_CONCEPTS[i];
+      if (seenLabels[c.label]) continue;
+      // Concepts with an explicit task whitelist only fire when the
+      // analyzed task is in the list — keeps "function" out of math
+      // outputs and "message" out of "message-in-a-bottle" creative.
+      if (c.tasks && c.tasks.indexOf(task) === -1) continue;
+      if (c.match.test(raw)) {
+        seenLabels[c.label] = true;
+        for (var j = 0; j < c.elabs.length; j++) out.push(c.elabs[j]);
+      }
+      // Cap so we don't bury the user under 50 sub-requirements.  Stop
+      // adding once we have plenty; the most-specific (earlier-matching)
+      // concepts win.
+      if (out.length >= 16) break;
+    }
+    // Trim to a useful working set (8 typical, 12 max for high-depth).
+    var maxItems = (a && a.complexity === 'high') ? 12 : 8;
+    return out.slice(0, maxItems);
+  }
+
+  function rwOpening(core, a, depth) {
+    var openers = {
+      code:       'Engineer',
+      research:   'Investigate and synthesize',
+      analysis:   'Analyze and diagnose',
+      creative:   'Compose with craft',
+      strategy:   'Strategize',
+      persuade:   'Craft persuasive material on',
+      howto:      'Guide me explicitly through',
+      brainstorm: 'Generate a ranked, diverse set of ideas for',
+      summarize:  'Distill',
+      math:       'Solve and verify',
+      general:    'Address with rigor'
+    };
+    var verb = openers[a.task] || openers.general;
+    var subject = (core || a.intent || a.subject || a.raw || '').trim();
+    // Strip order matters.  Question-form openers ("how to X", "what is Y")
+    // must run FIRST — patterns like "how to build" hide a content-bearing
+    // imperative ("build") that would otherwise survive the single-word verb
+    // pass and end up double-stacked with the task-specific verb prepended
+    // by rwOpening ("Engineer build a REST API"  ← wrong).  The optional
+    // "(?:i|we|you)\s+" tail absorbs the implicit subject ("how do I X")
+    // so we don't end up with a stray "I" / "we" at the start.
+    subject = subject.replace(/^(?:how\s+(?:does|do|did|to|can|could|should|would|will)\s+(?:i|we|you|they|one)?\s*|what\s+(?:is|are|was|were|does|do|did|will|would|should)\s+(?:the\s+best\s+way\s+to\s+|i|we|you)?\s*|why\s+(?:does|do|did|is|are|was|were|will|would|should)\s+(?:i|we|you|they)?\s*|when\s+(?:does|do|did|is|are|will|would|should)\s+(?:i|we|you|they)?\s*|where\s+(?:does|do|did|is|are|can|could|will|should)\s+(?:i|we|you|they)?\s*|which\s+(?:is|are|was|were|does|do)?\s*|who\s+(?:is|are|was|were|does|do|did|created|wrote|built|invented|made)?\s*)/i, '');
+    // Strip "(I/we/you) (want|need|would like) to" modal openers that
+    // analyze's Stage A only partially handles (lowercase-i variants).
+    subject = subject.replace(/^(?:i|we|you|they)\s+(?:want|need|would\s+like|have|wish|hope|plan|try|tried|attempted)\s+(?:to\s+)?/i, '');
+    subject = subject.replace(/^(?:i|we|you|they)['’]?d\s+like\s+(?:to\s+)?/i, '');
+    subject = subject.replace(/^let['’]?s\s+/i, '');
+    // Strip leftover pronoun subjects ("I" / "we" / "you" / "they" / "one")
+    // that may survive analyze's Stage B regex when it only matched the
+    // wh-/aux-pair ("how do") without consuming the trailing pronoun.
+    subject = subject.replace(/^(?:i|we|you|they|one)\s+/i, '');
+    // Strip leftover "the/a (best|easiest|simplest|fastest|right|correct|proper)
+    // way to" / "way of" / "method to" filler that analyze's "what is"
+    // strip leaves behind.  Without this, "what is the best way to deploy X"
+    // becomes "Engineer the best way to deploy X" (verb stacked on filler).
+    subject = subject.replace(/^(?:the|a)\s+(?:best|easiest|simplest|fastest|right|correct|proper|recommended|preferred|standard|typical|usual|common)\s+(?:way|approach|method|process|technique|practice)\s+(?:to|of|for)\s+/i, '');
+    subject = subject.replace(/^(?:the|a)\s+(?:way|approach|method|process)\s+(?:to|of|for)\s+/i, '');
+    // Then strip multi-word leading imperatives (longest match wins) so we
+    // don't end up with "Engineer me through writing X" or "Distill in depth Y".
+    subject = subject.replace(/^(guide me through|explain in depth|reason rigorously about|verify whether|compose a comprehensive piece on|execute a|set up|spin up|stand up|roll out|put together|figure out|work out)\s+/i, '');
+    // Finally strip single-word leading imperatives so we don't double-stack verbs.
+    subject = subject.replace(/^(write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate|fix|debug|refactor|migrate|optimize|harden|deploy|test|compute|calculate|evaluate|compare|plan|draft|outline|prepare|propose|recommend|critique|edit|rewrite|translate)\s+/i, '');
+    if (subject) { var firstWord = subject.split(/\s+/)[0]; if (!/^[A-Z]{2,}/.test(firstWord)) subject = subject.charAt(0).toLowerCase() + subject.slice(1); }
+    var stake = '';
+    if (depth >= 5) stake = ' to a research-defensible, expert-jury-grade standard';
+    else if (depth >= 4) stake = ' to a production-grade, expert-defensible standard';
+    else if (depth >= 3) stake = ' to a senior-practitioner standard';
+    var open = verb + ' ' + subject + stake;
+    if (!/[.!?]$/.test(open)) open += '.';
+    return open;
+  }
+
+  function rwDeliverables(a, depth) {
+    var bits = {
+      code:       'Provide complete, runnable code (no stubs, no pseudocode), explicit error handling for invalid inputs, edge-case coverage (empty/null/boundary/concurrent/malformed), security hardening (input validation, secrets handling, auth boundaries), inline comments that explain rationale rather than syntax, a worked example with realistic data, and a brief note on time/space complexity.',
+      research:   'Distinguish established consensus from active debate, cite mechanisms over correlations, name primary studies/sources where relevant, surface effect sizes and reproducibility caveats, and end with the strongest counter-evidence and what would change your conclusion.',
+      analysis:   'Separate observation from interpretation, identify root causes (not just symptoms), quantify magnitude/confidence wherever possible, and produce specific, prioritized, owner-assignable recommendations.',
+      creative:   'Lead with sensory specificity, sustain a consistent voice and emotional through-line, eliminate cliché and filler, and earn every word.',
+      strategy:   'Map at least three viable options with quantified trade-offs, surface second-order effects, recommend a primary path with explicit risk-mitigation steps, and define leading indicators of success.',
+      persuade:   'Open with a value-anchored hook, address the strongest objections preemptively, support claims with specific evidence, and close with one unambiguous call to action.',
+      howto:      'List prerequisites, then numbered explicit steps with no skipped detail, troubleshooting for common failure modes, and verifiable success checks at the end.',
+      brainstorm: 'Produce 5 conventional, 5 unconventional, and 3 wild-card ideas; for each: a one-sentence description, why it could work, the biggest risk, and a fast cheap test.',
+      summarize:  'Lead with the single most important takeaway, then 3–5 supporting points ranked by importance, then necessary detail, ending with implications.',
+      math:       'Show every step, justify each transformation, verify the final answer with a second independent method, and state the regime of validity.',
+      general:    'Be specific, take a defensible position, and substantiate every non-trivial claim.'
+    };
+    return bits[a.task] || bits.general;
+  }
+
+  function rwSpecifics(a, depth) {
+    var demands = [];
+    if (a.complexity === 'high' || depth >= 4) {
+      demands.push('Treat ambiguity as a design problem — explicitly state which assumptions you adopted and why');
+    }
+    if (a.audience === 'beginner') {
+      demands.push('Define every non-obvious term on first use');
+    } else if (a.audience === 'expert') {
+      demands.push('Skip basics — go directly to non-trivial, expert-level distinctions');
+    } else if (a.audience === 'developer') {
+      demands.push('Be precise; show working code or concrete examples instead of describing them');
+    } else if (a.audience === 'executive') {
+      demands.push('Lead with the decision and its impact; relegate methodology to a brief appendix');
+    }
+    if (depth >= 3) {
+      demands.push('Replace any vague quantifier ("some", "many", "often") with concrete numbers, ranges, or examples');
+    }
+    if (depth >= 4) {
+      demands.push('For every recommendation, name at least one realistic failure mode');
+    }
+    if ((a.domains || []).length > 0) {
+      demands.push('Use the precise domain terminology of ' + a.domains[0] + ' rather than colloquial paraphrase');
+    }
+    // Anchor in the user's actual nouns: if they mentioned specific
+    // technologies, file types, or numbers, demand the answer engages with
+    // those concrete things rather than abstracting over them.
+    var ent = a.entities || { tech: [], files: [], numbers: [] };
+    if (ent.tech.length) {
+      demands.push('Engage with the specific technologies the user mentioned (' + ent.tech.slice(0, 4).join(', ') + ') by name — do not abstract over them');
+    }
+    if (ent.files.length) {
+      demands.push('Treat the named artifacts (' + ent.files.slice(0, 3).join(', ') + ') as real, with realistic schema/content assumptions stated up front');
+    }
+    if (ent.numbers.length) {
+      demands.push('Honor the concrete quantities the user gave (' + ent.numbers.slice(0, 3).join(', ') + ') — do not hand-wave them into "some" or "a few"');
+    }
+    if (!demands.length) return '';
+    return demands.join('. ') + '.';
+  }
+
+  function rwRules(a, constraints, negations) {
+    var bits = [];
+    if (constraints.length) {
+      bits.push('Hard requirements: ' + constraints.slice(0, 5).map(function (c) { return c.replace(/[.!?]+$/, ''); }).join('; ') + '.');
+    }
+    if (negations.length) {
+      bits.push('Forbidden: ' + negations.slice(0, 5).map(function (n) { return n.replace(/[.!?]+$/, ''); }).join('; ') + '.');
+    }
+    return bits.join(' ');
+  }
+
+  function rwVerify(a, depth) {
+    if (depth < 3) return '';
+    var v = ['re-read the answer as if you were the implementer or reviewer who has to defend it'];
+    if (depth >= 4) v.push('flag any claim below 80% confidence with the specific uncertainty');
+    if (depth >= 4) v.push('list at least one thing this answer might be wrong about');
+    if (depth >= 5) v.push('produce a brief self-audit naming the weakest link in your reasoning and what would falsify it');
+    return 'Before finalizing, ' + v.join('; ') + '.';
+  }
+
+  // Task-aware "stealth" rewriter.  Builds a single tight paragraph that
+  // reads as if a senior practitioner had hand-rewritten the prompt — no
+  // headers, no bullets, no obvious scaffolding, but meaningfully different
+  // from the input (not just the input with a "Be specific" suffix).
+  // The shape is: <task verb> <subject> <task-specific demands woven into
+  // prose>, with the user's actual named technologies / files / numbers
+  // re-anchored so it never feels generic.
+  function buildStealthRewrite(raw, a) {
+    var clean = rwEnrich(rwNormalize(raw));
+    // Strip whatever leading verb rwNormalize/Enrich produced so we can
+    // prepend our own task-specific verb cleanly.
+    // Strip order matters.  Question-form openers ("how to X", "what is Y")
+    // must run FIRST, because patterns like "how to build" hide a
+    // content-bearing imperative ("build") that would otherwise survive the
+    // single-word verb pass and end up double-stacked with the task-specific
+    // verb prepended below ("Write production-quality, runnable code for
+    // build a REST API."  ← wrong).  After the question form is removed,
+    // the multi-word and single-word verb strips peel any remaining leading
+    // imperative cleanly.
+    var subject = clean
+      // 1. Question-form openers ("how to ...", "what is ...", ...).
+      //    Optional pronoun tail absorbs the subject ("how do I X").
+      .replace(/^(?:how\s+(?:does|do|did|to|can|could|should|would|will)\s+(?:i|we|you|they|one)?\s*|what\s+(?:is|are|was|were|does|do|did|will|would|should)\s+(?:the\s+best\s+way\s+to\s+|i|we|you)?\s*|why\s+(?:does|do|did|is|are|was|were|will|would|should)\s+(?:i|we|you|they)?\s*|when\s+(?:does|do|did|is|are|will|would|should)\s+(?:i|we|you|they)?\s*|where\s+(?:does|do|did|is|are|can|could|will|should)\s+(?:i|we|you|they)?\s*|which\s+(?:is|are|was|were|does|do)?\s*|who\s+(?:is|are|was|were|does|do|did|created|wrote|built|invented|made)?\s*)/i, '')
+      // 2. Strip leading "(I/we/you) (want|need|would like|have|wish) to"
+      //    BEFORE the bare pronoun strip, so "we need to debug X" peels to
+      //    "debug X" rather than "need to debug X".
+      .replace(/^(?:i|we|you|they)\s+(?:want|need|would\s+like|have|wish|hope|plan|try|tried|attempted)\s+(?:to\s+)?/i, '')
+      .replace(/^(?:i|we|you|they)['’]?d\s+like\s+(?:to\s+)?/i, '')
+      .replace(/^let['’]?s\s+/i, '')
+      // 3. Strip leading pronoun subject ("I deploy", "we use", "you can")
+      //    so the task verb prepended below doesn't end up as "Write
+      //    production-quality, runnable code for i deploy my app".
+      .replace(/^(?:i|we|you|they|one)\s+/i, '')
+      // 3b. Strip "the/a (best|easiest|right|...) way to" / "method to"
+      //     filler so "what is the best way to deploy X" peels cleanly to
+      //     "deploy X" instead of "the best way to deploy X".
+      .replace(/^(?:the|a)\s+(?:best|easiest|simplest|fastest|right|correct|proper|recommended|preferred|standard|typical|usual|common)\s+(?:way|approach|method|process|technique|practice)\s+(?:to|of|for)\s+/i, '')
+      .replace(/^(?:the|a)\s+(?:way|approach|method|process)\s+(?:to|of|for)\s+/i, '')
+      // 4. Multi-word imperatives produced by rwNormalize / rwEnrich.
+      .replace(/^(?:Guide me through|Investigate and synthesize|Analyze and diagnose|Compose with craft|Strategize|Craft persuasive material on|Distill|Solve and verify|Address with rigor|Engineer|Explain in depth|Reason rigorously about|Verify whether|Compose a comprehensive piece on|Execute a|Demonstrate|Produce|Determine|Work out|Review|Analyze|Set up|Spin up|Stand up|Roll out|Put together|Figure out)\s+/i, '')
+      // 5. Single-word imperatives ("build", "fix", "compute", ...).
+      .replace(/^(?:write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate|compare|evaluate|plan|debug|diagnose|fix|refactor|migrate|optimize|harden|deploy|test|compute|calculate|draft|outline|prepare|propose|recommend|critique|edit|rewrite|translate)\s+(?:me\s+|us\s+|a\s+|an\s+|the\s+|some\s+|that\s+|it\s+)*/i, '')
+      .replace(/[.?!]+$/, '')
+      .trim();
+    if (!subject) subject = (a.intent || raw).trim();
+    if (subject) { var firstWord = subject.split(/\s+/)[0]; if (!/^[A-Z]{2,}/.test(firstWord)) subject = subject.charAt(0).toLowerCase() + subject.slice(1); }
+
+    var ent = a.entities || { tech: [], files: [], numbers: [] };
+    var anchor = '';
+    if (ent.tech.length) {
+      anchor += ' Treat ' + ent.tech.slice(0, 3).join(', ') +
+        (ent.tech.length === 1 ? ' as a real tool, not a placeholder' : ' as real tools, not placeholders') + '.';
+    }
+    if (ent.files.length) {
+      var fileList = ent.files.slice(0, 2).join(' and ');
+      anchor += ent.files.length === 1
+        ? ' Assume ' + fileList + ' is a real file with realistic content; state your schema assumption explicitly.'
+        : ' Assume ' + fileList + ' are real files with realistic content; state your schema assumptions explicitly.';
+    }
+    if (ent.numbers.length) {
+      var numList = ent.numbers.slice(0, 2).join(', ');
+      anchor += ent.numbers.length === 1
+        ? ' Honor the concrete number (' + numList + ') instead of softening it.'
+        : ' Honor the concrete numbers (' + numList + ') instead of softening them.';
+    }
+
+    // Per-task structured rewrites.  Each one is a single paragraph that
+    // explicitly differs from the input — different opening verb, different
+    // structure, concrete demands, and a closing constraint.
+    var t = a.task || 'general';
+    var rewritten;
+    switch (t) {
+      case 'code':
+        rewritten = 'Write production-quality, runnable code for ' + subject +
+          '. State the exact inputs and outputs up front, validate inputs, handle empty / null / malformed cases explicitly, and include a short worked example with realistic data. Add inline comments that explain *why* (not what), and end with a one-line note on time and space complexity. No pseudocode, no stubs.';
+        break;
+      case 'research':
+        rewritten = 'Explain ' + subject +
+          ' rigorously. Distinguish established consensus from active debate, name at least two specific sources or schools of thought, and cite a concrete mechanism — not a correlation — for every claim. Surface the strongest counter-evidence and state what would change the conclusion.';
+        break;
+      case 'analysis':
+        rewritten = 'Diagnose ' + subject +
+          '. Lead with the answer in one sentence, then justify it. Name the top three causal factors in order of estimated impact, with concrete evidence for each. Flag any factor below 70% confidence, and state at least one thing the diagnosis might be missing.';
+        break;
+      case 'creative':
+        rewritten = 'Compose ' + subject +
+          ' with vivid sensory specificity — sight, sound, texture, weight. Avoid abstract emotion words ("happy", "sad", "beautiful"); earn the feeling through concrete physical detail. Aim for at least one striking, original image per paragraph and cut every line that does not pull its weight.';
+        break;
+      case 'strategy':
+        rewritten = 'Recommend a strategy for ' + subject +
+          '. Open with the recommendation in one sentence. Then map the two strongest alternatives, score them honestly against the same criteria, and explain why each was rejected. Name at least one risk that, if it materialized, would change the recommendation.';
+        break;
+      case 'persuade':
+        rewritten = 'Argue for ' + subject +
+          '. Open with the strongest version of the opposing view first, then dismantle it. Use one concrete example, one named comparison, and one falsifiable prediction. Close with the single line that, if remembered, would change a skeptic\'s mind.';
+        break;
+      case 'howto':
+        rewritten = 'Walk through ' + subject +
+          ' as numbered, copy-pasteable steps. For each step, state the exact command or action, the expected output, and one common failure mode with how to recognize and recover from it. End with a verification step that proves the whole sequence worked.';
+        break;
+      case 'brainstorm':
+        rewritten = 'Generate seven or more distinct directions for ' + subject +
+          ', spanning safe-and-conventional through genuinely contrarian. Tag each one [SAFE], [STRETCH], or [CONTRARIAN], add a one-sentence description, the strongest reason it might work, and a one-line "why this might fail."';
+        break;
+      case 'summarize':
+        rewritten = 'Summarize ' + subject +
+          '. Lead with a one-sentence thesis, then three to five supporting bullets in priority order. Keep the entire summary under 200 words. End with the single fact a reader must not forget.';
+        break;
+      case 'math':
+        rewritten = 'Solve ' + subject +
+          ' step by step. State the rule or formula used at each step, verify the final answer with a different method (estimation, substitution, or sanity-check), and state every unit and domain assumption explicitly.';
+        break;
+      default:
+        rewritten = 'Address ' + subject +
+          ' rigorously. Lead with the answer, then justify it. Name the assumption the answer most depends on, give one concrete example, and call out one realistic edge case where the answer would not hold.';
+    }
+
+    // Content-aware expansion — weave concept-specific demands into the
+    // stealth output so it actually differs from the input by addressing
+    // the specific nouns/verbs the user used (CSV → quoted-field parsing;
+    // API → idempotency; story → POV; etc.).
+    var elabs = rwElaborate(raw, a);
+    if (elabs.length) {
+      rewritten += ' Address all of: ' + rwJoinElabs(elabs);
+    }
+
+    rewritten += anchor;
+    // No throat-clearing on the way in.
+    rewritten = rewritten.replace(/\s{2,}/g, ' ').trim();
+    return rewritten;
+  }
+
+  // Format a list of elaboration clauses as one readable sentence.
+  // Goes from ['a', 'b', 'c'] → 'a; b; and c.'
+  function rwJoinElabs(elabs) {
+    if (!elabs || !elabs.length) return '';
+    if (elabs.length === 1) return elabs[0] + '.';
+    if (elabs.length === 2) return elabs[0] + '; and ' + elabs[1] + '.';
+    var head = elabs.slice(0, elabs.length - 1).join('; ');
+    return head + '; and ' + elabs[elabs.length - 1] + '.';
+  }
+
+  // Stage 4b: content-aware expansion of the user's specific prompt.
+  // Detects concrete concepts (CSV, API, deploy, story, RCA, …) in the
+  // raw text and emits a sentence that names every sub-requirement those
+  // concepts demand.  This is what differentiates a real rewrite from
+  // template scaffolding.
+  function rwExpansion(a) {
+    var elabs = rwElaborate(a && a.raw, a);
+    if (!elabs.length) return '';
+    return 'Address all of the following concretely — none of them by gesture: ' + rwJoinElabs(elabs);
+  }
+
+  function rewritePrompt(a, depth) {
+    if (!a) return '';
+    var intent = a.intent || a.raw || '';
+    var constraints = a.constraints || [];
+    var negations = a.negations || [];
+
+    // Stage 1 + 2: clean up the user's text
+    var core = rwEnrich(rwNormalize(intent));
+
+    // Stage 3–7: layered scaffolding around the cleaned-up core
+    var parts = [];
+    parts.push(rwOpening(core, a, depth));
+    var expansion = rwExpansion(a);
+    if (expansion) parts.push(expansion);
+    parts.push(rwDeliverables(a, depth));
+    var spec = rwSpecifics(a, depth);
+    if (spec) parts.push(spec);
+    var rules = rwRules(a, constraints, negations);
+    if (rules) parts.push(rules);
+    var verify = rwVerify(a, depth);
+    if (verify) parts.push(verify);
+
+    // Smooth the join — every part is already a complete sentence/cluster.
+    return parts
+      .filter(function (p) { return p && p.trim(); })
+      .map(function (p) { return p.trim(); })
+      .join(' ');
+  }
+
   // ── PROMPT BUILDER ───────────────────────────────────────────────────────────
   function buildPrompt(a, depth, mode, k) {
+    // FIRST: Rewrite the actual prompt content into a better version
+    var rewrittenPrompt = rewritePrompt(a, depth);
+    
+    // Build the framework wrapping - pass rewritten prompt to each builder
     var result;
     if (mode === 'manus') {
-      result = buildManus(a, depth);
+      result = buildManus(a, depth, rewrittenPrompt);
     } else if (mode === 'juma') {
-      result = buildJuma(a, depth);
+      result = buildJuma(a, depth, rewrittenPrompt);
     } else {
-      result = buildHailMary(a, depth);
+      result = buildHailMary(a, depth, rewrittenPrompt);
     }
+    
+    // Note: TASK replacement already done inside the builder functions
 
     // ── AUTO-TECHNIQUES INJECTION ────────────────────────────────────────────
     // Apply techniques from the unjail.ai-inspired library based on task/depth
@@ -1195,7 +2574,7 @@ window.HailMaryEngine = (function () {
       mode: resolvedMode,
       autoRouted: mode === 'auto',
       techniques: techNames.slice(0, techCount + 3),
-      analysis: { task: a.task, domains: a.domains, complexity: a.complexity, intent: a.intent, isVague: a.amb >= 3 },
+      analysis: { task: a.task, domains: a.domains, complexity: a.complexity, intent: a.intent, entities: a.entities, isVague: a.amb >= 3 },
       score: score,
       injectionStrategies: injectionStrategies,
       stats: {

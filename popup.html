@@ -15,7 +15,7 @@
       <span class="logo-ico">☄️</span>
       <div>
         <div class="logo-name">HailMary</div>
-        <div class="logo-sub">Autonomous Prompt Enhancer v9.0</div>
+        <div class="logo-sub">Autonomous Prompt Enhancer v10.0</div>
       </div>
     </div>
     <div class="hdr-actions">
@@ -96,6 +96,13 @@
       <button class="inject-mode-btn" data-inject="system" title="Split into system + user prompts">⚙️ System</button>
       <button class="inject-mode-btn" data-inject="chain" title="Multi-turn conversation starter">🔗 Chain</button>
     </div>
+    <div class="inject-mode-row">
+      <button class="inject-mode-btn" data-inject="expert" title="Frame as a real consult to a named expert">🧑‍🔬 Expert</button>
+      <button class="inject-mode-btn" data-inject="socratic" title="Surface and probe hidden assumptions">❓ Socratic</button>
+      <button class="inject-mode-btn" data-inject="adversarial" title="Force the answer to survive a hostile review">🛡️ Adversarial</button>
+      <button class="inject-mode-btn" data-inject="tournament" title="3 candidate answers, scored, then judge">🏆 Tournament</button>
+      <button class="inject-mode-btn" data-inject="contrarian" title="Steel-man the opposite first, then fold in">♟️ Contrarian</button>
+    </div>
 
     <div class="toggles">
       <label class="tog"><input type="checkbox" id="tgInject" checked><span class="tog-track"></span><span>Auto-Inject</span></label>
@@ -158,6 +165,11 @@
       <button class="inject-tab" data-strategy="stealth">🥷 Stealth</button>
       <button class="inject-tab" data-strategy="system">⚙️ System</button>
       <button class="inject-tab" data-strategy="chain">🔗 Chain</button>
+      <button class="inject-tab" data-strategy="expert">🧑‍🔬 Expert</button>
+      <button class="inject-tab" data-strategy="socratic">❓ Socratic</button>
+      <button class="inject-tab" data-strategy="adversarial">🛡️ Adversarial</button>
+      <button class="inject-tab" data-strategy="tournament">🏆 Tournament</button>
+      <button class="inject-tab" data-strategy="contrarian">♟️ Contrarian</button>
     </div>
 
     <div id="outBox" class="out-box"></div>
@@ -211,7 +223,7 @@
     <div id="techList" class="tech-list"></div>
   </div>
 
-  <div class="footer">HailMary v9.0 — Autonomous Prompt Enhancer · Crescendo×Matrix×7 Patterns</div>
+  <div class="footer">HailMary v10.0 — Multi-stage Rewriter · 30+ Techniques · 10 Injection Strategies · 3-Pass Chain</div>
 </div>
 <script src="engine.js"></script>
 <script src="popup.js"></script>

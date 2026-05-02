@@ -1,8 +1,61 @@
-# HailMary v8.0 — Autonomous Prompt Agent
+# HailMary v10.0 — Autonomous Prompt Agent
 
-**Direct/Indirect/Stealth injection. Prompt scoring. Templates. Context capture. Chain enhancement. Adaptive intelligence.**
+**Multi-stage rewriter. 30+ research-backed techniques. 10 injection strategies. 3-pass chain refinement. Prompt scoring. Templates. Context capture. Adaptive intelligence.**
 
-## What's New in v8.0
+## What's New in v10.0
+
+### ✍️ **Multi-Stage Prompt Rewriter**
+The rewriter no longer just slaps an authoritative sentence on your prompt. It runs a real seven-stage pipeline:
+1. **Normalize** — strips pleasantries / filler / weak verbs
+2. **Enrich** — replaces vague quantifiers ("some", "many", "good") with crisp ones
+3. **Opening** — picks a task-specific authoritative imperative + depth-tuned stake
+4. **Deliverables** — explicit, task-specific list of expected outputs
+5. **Specifics** — depth- and audience-tuned specificity demands
+6. **Rules** — weaves your hard requirements and forbidden patterns into prose
+7. **Verify** — depth-tuned self-verification clauses
+
+### 🧠 **18 New Research-Backed Techniques**
+Picked automatically based on task and depth:
+- **Chain-of-Verification** (Dhuliawala 2023, Meta AI)
+- **Tree-of-Thoughts** (Yao 2023, Princeton/DeepMind)
+- **Plan-and-Solve** (Wang 2023)
+- **Step-Back Prompting** (Zheng 2023, Google DeepMind)
+- **Skeleton-of-Thought** (Ning 2023)
+- **Self-Consistency** (Wang 2022, Google)
+- **Reflexion** (Shinn 2023, Northeastern/MIT)
+- **EmotionPrompt** (Li 2023, Microsoft) — +8% accuracy
+- **Pre-Mortem** (Klein, adapted)
+- **First-Principles Reasoning**
+- **5W1H Decomposition**
+- **MECE Framework**
+- **Analogical Prompting** (Yasunaga 2023, DeepMind)
+- **Generated Knowledge** (Liu 2022)
+- **Steel-Man Opposition**
+- **Constitutional Self-Critique** (Anthropic-style)
+- **Negative Prompting**
+- **Confidence Calibration** (Lin/Hilton/Evans 2022)
+- **Socratic Probing**
+- **Few-Shot Exemplar Anchoring** (Brown 2020)
+- **ReAct — Reason + Act** (Yao 2022)
+- **Least-to-Most** (Zhou 2022, Google)
+
+### 🎯 **5 New Injection Strategies (10 total)**
+Core: Direct, Indirect, Stealth, System, Chain. New:
+- **🧑‍🔬 Expert** — frames as a real consult to a named expert
+- **❓ Socratic** — surfaces and probes hidden assumptions before answering
+- **🛡️ Adversarial** — forces the answer to survive a hostile expert review
+- **🏆 Tournament** — generates 3 candidate answers, scores them, picks the winner
+- **♟️ Contrarian** — steel-mans the opposite first, folds insights into the conventional answer
+
+### 🔗 **3-Pass Chain Refinement**
+Chain enhancement now runs three targeted passes instead of one generic re-wrap:
+1. **VERIFY** — chain-of-verification on every factual claim
+2. **SHARPEN** — replaces vague language with concrete numbers / named examples
+3. **DEHEDGE** — strips throat-clearing, undefended hedges, restated questions
+
+Plus task-specific hardening at the end (code, research, creative, analysis, strategy, persuade).
+
+## Earlier Highlights (v8.0)
 
 ### 🎯 **5 Injection Modes**
 - **Direct**: Full replacement — paste the enhanced prompt as-is into AI chat
@@ -65,7 +118,7 @@ Search through past enhancements by prompt text, task type, or mode.
 
 ### Auto-Inject & Auto-Submit
 - Detects AI pages (ChatGPT, Claude, Gemini, Perplexity, Poe, Grok, DeepSeek, Copilot, Mistral, You.com)
-- Choose injection mode (Direct/Indirect/Stealth) before or after enhancing
+- Choose any of 10 injection modes (Direct / Indirect / Stealth / System / Chain / Expert / Socratic / Adversarial / Tournament / Contrarian) before or after enhancing
 - Optional auto-submit
 
 ### Supported Platforms
