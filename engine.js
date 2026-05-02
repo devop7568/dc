@@ -1821,15 +1821,24 @@ window.HailMaryEngine = (function () {
     };
     var verb = openers[a.task] || openers.general;
     var subject = (core || a.intent || a.subject || a.raw || '').trim();
-    // Strip multi-word leading imperatives first (longest match wins) so we
+    // Strip order matters.  Question-form openers ("how to X", "what is Y")
+    // must run FIRST — patterns like "how to build" hide a content-bearing
+    // imperative ("build") that would otherwise survive the single-word verb
+    // pass and end up double-stacked with the task-specific verb prepended
+    // by rwOpening ("Engineer build a REST API"  ← wrong).  The optional
+    // "(?:i|we|you)\s+" tail absorbs the implicit subject ("how do I X")
+    // so we don't end up with a stray "I" / "we" at the start.
+    subject = subject.replace(/^(?:how\s+(?:does|do|did|to|can|could|should|would|will)\s+(?:i|we|you|they|one)?\s*|what\s+(?:is|are|was|were|does|do|did|will|would|should)\s+(?:the\s+best\s+way\s+to\s+|i|we|you)?\s*|why\s+(?:does|do|did|is|are|was|were|will|would|should)\s+(?:i|we|you|they)?\s*|when\s+(?:does|do|did|is|are|will|would|should)\s+(?:i|we|you|they)?\s*|where\s+(?:does|do|did|is|are|can|could|will|should)\s+(?:i|we|you|they)?\s*|which\s+(?:is|are|was|were|does|do)?\s*|who\s+(?:is|are|was|were|does|do|did|created|wrote|built|invented|made)?\s*)/i, '');
+    // Strip leftover pronoun subjects ("I" / "we" / "you" / "they" / "one")
+    // that may survive analyze's Stage B regex when it only matched the
+    // wh-/aux-pair ("how do") without consuming the trailing pronoun.
+    subject = subject.replace(/^(?:i|we|you|they|one)\s+/i, '');
+    // Then strip multi-word leading imperatives (longest match wins) so we
     // don't end up with "Engineer me through writing X" or "Distill in depth Y".
     subject = subject.replace(/^(guide me through|explain in depth|reason rigorously about|verify whether|compose a comprehensive piece on|execute a|set up|spin up|stand up|roll out|put together|figure out|work out)\s+/i, '');
-    // Then strip single-word leading imperatives so we don't double-stack verbs.
+    // Finally strip single-word leading imperatives so we don't double-stack verbs.
     subject = subject.replace(/^(write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate|fix|debug|refactor|migrate|optimize|harden|deploy|test|compute|calculate|evaluate|compare|plan|draft|outline|prepare|propose|recommend|critique|edit|rewrite|translate)\s+/i, '');
-    // Strip leading question-form openers ("how does X", "what is Y") so the
-    // rewriter's own verb doesn't double up ("Investigate how does …").
-    subject = subject.replace(/^(?:how\s+(?:does|do|to|can|should|would|will)\s+|what\s+(?:is|are|was|were|does|do|will|would|should)\s+|why\s+(?:does|do|is|are|was|were|will|would|should)\s+|when\s+(?:does|do|is|are|will|would|should)\s+|where\s+(?:does|do|is|are|can|will|should)\s+|which\s+|who\s+(?:is|are|was|were)\s+)/i, '');
-    if (subject) subject = subject.charAt(0).toLowerCase() + subject.slice(1);
+    if (subject) { var firstWord = subject.split(/\s+/)[0]; if (!/^[A-Z]{2,}/.test(firstWord)) subject = subject.charAt(0).toLowerCase() + subject.slice(1); }
     var stake = '';
     if (depth >= 5) stake = ' to a research-defensible, expert-jury-grade standard';
     else if (depth >= 4) stake = ' to a production-grade, expert-defensible standard';
@@ -1927,17 +1936,26 @@ window.HailMaryEngine = (function () {
     var clean = rwEnrich(rwNormalize(raw));
     // Strip whatever leading verb rwNormalize/Enrich produced so we can
     // prepend our own task-specific verb cleanly.
+    // Strip order matters.  Question-form openers ("how to X", "what is Y")
+    // must run FIRST, because patterns like "how to build" hide a
+    // content-bearing imperative ("build") that would otherwise survive the
+    // single-word verb pass and end up double-stacked with the task-specific
+    // verb prepended below ("Write production-quality, runnable code for
+    // build a REST API."  ← wrong).  After the question form is removed,
+    // the multi-word and single-word verb strips peel any remaining leading
+    // imperative cleanly.
     var subject = clean
+      // 1. Question-form openers ("how to ...", "what is ...", ...).
+      //    Optional pronoun tail absorbs the subject ("how do I X").
+      .replace(/^(?:how\s+(?:does|do|did|to|can|could|should|would|will)\s+(?:i|we|you|they|one)?\s*|what\s+(?:is|are|was|were|does|do|did|will|would|should)\s+(?:the\s+best\s+way\s+to\s+|i|we|you)?\s*|why\s+(?:does|do|did|is|are|was|were|will|would|should)\s+(?:i|we|you|they)?\s*|when\s+(?:does|do|did|is|are|will|would|should)\s+(?:i|we|you|they)?\s*|where\s+(?:does|do|did|is|are|can|could|will|should)\s+(?:i|we|you|they)?\s*|which\s+(?:is|are|was|were|does|do)?\s*|who\s+(?:is|are|was|were|does|do|did|created|wrote|built|invented|made)?\s*)/i, '')
+      // 2. Multi-word imperatives produced by rwNormalize / rwEnrich.
       .replace(/^(?:Guide me through|Investigate and synthesize|Analyze and diagnose|Compose with craft|Strategize|Craft persuasive material on|Distill|Solve and verify|Address with rigor|Engineer|Explain in depth|Reason rigorously about|Verify whether|Compose a comprehensive piece on|Execute a|Demonstrate|Produce|Determine|Work out|Review|Analyze|Set up|Spin up|Stand up|Roll out|Put together|Figure out)\s+/i, '')
+      // 3. Single-word imperatives ("build", "fix", "compute", ...).
       .replace(/^(?:write|build|create|make|generate|implement|design|engineer|explain|analyze|find|tell|show|describe|develop|produce|compose|distill|guide|review|investigate|summarize|solve|brainstorm|persuade|strategize|determine|demonstrate|compare|evaluate|plan|debug|diagnose|fix|refactor|migrate|optimize|harden|deploy|test|compute|calculate|draft|outline|prepare|propose|recommend|critique|edit|rewrite|translate)\s+(?:me\s+|us\s+|a\s+|an\s+|the\s+|some\s+|that\s+|it\s+)*/i, '')
-      // Strip leading question-form openers ("how does X", "what is Y",
-      // "why are Z") so the rewriter's own opener doesn't double-stack
-      // ("Explain how does pretty-printed JSON differ").
-      .replace(/^(?:how\s+(?:does|do|to|can|should|would|will)\s+|what\s+(?:is|are|was|were|does|do|will|would|should)\s+|why\s+(?:does|do|is|are|was|were|will|would|should)\s+|when\s+(?:does|do|is|are|will|would|should)\s+|where\s+(?:does|do|is|are|can|will|should)\s+|which\s+|who\s+(?:is|are|was|were)\s+)/i, '')
       .replace(/[.?!]+$/, '')
       .trim();
     if (!subject) subject = (a.intent || raw).trim();
-    if (subject) subject = subject.charAt(0).toLowerCase() + subject.slice(1);
+    if (subject) { var firstWord = subject.split(/\s+/)[0]; if (!/^[A-Z]{2,}/.test(firstWord)) subject = subject.charAt(0).toLowerCase() + subject.slice(1); }
 
     var ent = a.entities || { tech: [], files: [], numbers: [] };
     var anchor = '';
