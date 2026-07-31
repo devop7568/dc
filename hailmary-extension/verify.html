@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HailMary v3.0 — Installation Verification</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #0a0a10; color: #f1f5f9; }
+    h1 { color: #a855f7; }
+    .check { margin: 20px 0; padding: 15px; background: #16161f; border-left: 4px solid #64748b; border-radius: 8px; }
+    .check.pass { border-left-color: #22c55e; }
+    .check.fail { border-left-color: #ef4444; }
+    .check.warn { border-left-color: #eab308; }
+    .status { font-weight: bold; margin-bottom: 8px; }
+    .pass .status { color: #22c55e; }
+    .fail .status { color: #ef4444; }
+    .warn .status { color: #eab308; }
+    button { background: linear-gradient(135deg, #7c3aed, #f97316); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; margin: 10px 5px; }
+    button:hover { opacity: 0.9; }
+    pre { background: #0a0a10; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    .info { background: rgba(124, 58, 237, 0.1); padding: 15px; border-radius: 8px; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <h1>☄️ HailMary v3.0 — Installation Verification</h1>
+  
+  <div class="info">
+    <strong>How to use:</strong> Click "Run Verification" to check if the extension is installed and working correctly.
+  </div>
+
+  <button onclick="runVerification()">🔍 Run Verification</button>
+  <button onclick="location.reload()">🔄 Refresh</button>
+
+  <div id="results"></div>
+
+  <script>
+    async function runVerification() {
+      const results = document.getElementById('results');
+      results.innerHTML = '<p>Running checks...</p>';
+      
+      const checks = [];
+
+      // Check 1: Chrome APIs available
+      try {
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+          checks.push({
+            name: 'Chrome Extension APIs',
+            status: 'pass',
+            message: 'Chrome extension APIs are available'
+          });
+        } else {
+          checks.push({
+            name: 'Chrome Extension APIs',
+            status: 'fail',
+            message: 'Chrome extension APIs not found. Are you running this from the extension context?'
+          });
+        }
+      } catch(e) {
+        checks.push({
+          name: 'Chrome Extension APIs',
+          status: 'fail',
+          message: 'Error: ' + e.message
+        });
+      }
+
+      // Check 2: Storage API
+      try {
+        const data = await new Promise(resolve => {
+          chrome.storage.local.get(['hm_v3', 'hm_knowledge', 'hm_memory'], resolve);
+        });
+        
+        if (data.hm_v3) {
+          checks.push({
+            name: 'Settings Storage',
+            status: 'pass',
+            message: 'Settings found: mode=' + data.hm_v3.mode + ', depth=' + data.hm_v3.depth
+          });
+        } else {
+          checks.push({
+            name: 'Settings Storage',
+            status: 'warn',
+            message: 'No settings found. Extension may not have been initialized yet.'
+          });
+        }
+
+        if (data.hm_knowledge) {
+          const techCount = (data.hm_knowledge.techniques || []).length;
+          const lastFetch = data.hm_knowledge.lastFetch || 0;
+          const timeSince = lastFetch ? Math.floor((Date.now() - lastFetch) / 1000 / 60) : 0;
+          
+          checks.push({
+            name: 'Knowledge Base',
+            status: techCount > 0 ? 'pass' : 'warn',
+            message: techCount + ' techniques loaded' + (lastFetch ? ' (fetched ' + timeSince + ' min ago)' : ' (not fetched yet)')
+          });
+        } else {
+          checks.push({
+            name: 'Knowledge Base',
+            status: 'warn',
+            message: 'Knowledge base not initialized. Wait 3 seconds after install.'
+          });
+        }
+
+        if (data.hm_memory) {
+          const sigCount = Object.keys(data.hm_memory.promptSignatures || {}).length;
+          const totalEnhancements = data.hm_memory.totalEnhancements || 0;
+          
+          checks.push({
+            name: 'Learning Memory',
+            status: 'pass',
+            message: totalEnhancements + ' enhancements recorded, ' + sigCount + ' patterns learned'
+          });
+        }
+      } catch(e) {
+        checks.push({
+          name: 'Storage Check',
+          status: 'fail',
+          message: 'Error accessing storage: ' + e.message
+        });
+      }
+
+      // Check 3: Background service worker
+      try {
+        const response = await new Promise(resolve => {
+          chrome.runtime.sendMessage({type: 'GET_STATUS'}, resolve);
+        });
+        
+        if (response) {
+          checks.push({
+            name: 'Background Service Worker',
+            status: 'pass',
+            message: 'Service worker responding. ' + response.techniqueCount + ' techniques available.'
+          });
+        } else {
+          checks.push({
+            name: 'Background Service Worker',
+            status: 'fail',
+            message: 'Service worker not responding. Check chrome://extensions/ for errors.'
+          });
+        }
+      } catch(e) {
+        checks.push({
+          name: 'Background Service Worker',
+          status: 'fail',
+          message: 'Error: ' + e.message
+        });
+      }
+
+      // Check 4: Engine loaded
+      try {
+        if (typeof window.HailMaryEngine !== 'undefined') {
+          checks.push({
+            name: 'Enhancement Engine',
+            status: 'pass',
+            message: 'Engine loaded successfully'
+          });
+        } else {
+          checks.push({
+            name: 'Enhancement Engine',
+            status: 'fail',
+            message: 'Engine not found. Check if engine.js is loaded.'
+          });
+        }
+      } catch(e) {
+        checks.push({
+          name: 'Enhancement Engine',
+          status: 'fail',
+          message: 'Error: ' + e.message
+        });
+      }
+
+      // Render results
+      let html = '';
+      checks.forEach(check => {
+        html += `
+          <div class="check ${check.status}">
+            <div class="status">${check.status === 'pass' ? '✅' : check.status === 'fail' ? '❌' : '⚠️'} ${check.name}</div>
+            <div>${check.message}</div>
+          </div>
+        `;
+      });
+
+      const passCount = checks.filter(c => c.status === 'pass').length;
+      const failCount = checks.filter(c => c.status === 'fail').length;
+      const warnCount = checks.filter(c => c.status === 'warn').length;
+
+      html += `
+        <div class="info">
+          <strong>Summary:</strong> ${passCount} passed, ${failCount} failed, ${warnCount} warnings
+          ${failCount === 0 && warnCount === 0 ? '<br><br>🎉 <strong>All checks passed! Extension is working correctly.</strong>' : ''}
+          ${failCount > 0 ? '<br><br>⚠️ <strong>Some checks failed. See TROUBLESHOOTING.md for help.</strong>' : ''}
+        </div>
+      `;
+
+      results.innerHTML = html;
+    }
+
+    // Auto-run on load if in extension context
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      setTimeout(runVerification, 500);
+    }
+  </script>
+</body>
+</html>

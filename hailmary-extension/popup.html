@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>HailMary</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="logo">
+      <span class="logo-ico">☄️</span>
+      <div>
+        <div class="logo-name">HailMary</div>
+        <div class="logo-sub">Autonomous Prompt Enhancer v3.0</div>
+      </div>
+    </div>
+    <div class="status-dot" id="statusDot" title="Checking page..."></div>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="tabs">
+    <button class="tab active" data-mode="hailmary">☄️ Hail Mary</button>
+    <button class="tab" data-mode="manus">🧠 Manus</button>
+    <button class="tab" data-mode="juma">⚡ Juma</button>
+    <button class="tab" data-mode="auto">🤖 Auto</button>
+    <button class="tab" data-mode="turns">🔄 Turns</button>
+  </div>
+
+  <!-- INPUT (standard modes) -->
+  <div id="standardPanel">
+  <div class="section">
+    <label class="lbl">Raw Prompt</label>
+    <textarea id="rawInput" rows="5" placeholder="Type your raw prompt here. HailMary will analyze it and apply the best prompting techniques automatically..."></textarea>
+
+    <label class="lbl mt8">Depth</label>
+    <div class="depth-row">
+      <input type="range" id="depthSlider" min="1" max="5" value="4">
+      <span id="depthLbl" class="depth-lbl">ULTRA</span>
+    </div>
+
+    <div class="toggles">
+      <label class="tog"><input type="checkbox" id="tgInject" checked><span class="tog-track"></span><span>Auto-Inject</span></label>
+      <label class="tog"><input type="checkbox" id="tgSubmit"><span class="tog-track"></span><span>Auto-Submit</span></label>
+      <label class="tog"><input type="checkbox" id="tgLiveSearch" checked><span class="tog-track"></span><span>Live Search</span></label>
+    </div>
+  </div>
+
+  <!-- BUTTON -->
+  <button id="fireBtn" class="fire-btn">
+    <span class="fire-ico">☄️</span>
+    <span id="fireLbl">FIRE HAIL MARY</span>
+  </button>
+  </div>
+
+  <!-- TURNS PANEL -->
+  <div id="turnsPanel" style="display:none">
+  <div class="section">
+    <label class="lbl">Topic or Goal</label>
+    <textarea id="turnsInput" rows="4" placeholder="Describe what you want to learn or accomplish. e.g. 'Python subprocess module for server automation' or 'how to raise a seed round'..."></textarea>
+
+    <label class="lbl mt8">Number of Turns</label>
+    <div class="turns-count-row">
+      <button class="turns-count-btn active" data-turns="6">6 Turns</button>
+      <button class="turns-count-btn" data-turns="8">8 Turns</button>
+      <button class="turns-count-btn" data-turns="10">10 Turns</button>
+    </div>
+    <div class="turns-hint">Each turn is a complete, copy-paste-ready message that builds on the last — escalating from basics to expert-level in a single conversation arc.</div>
+  </div>
+
+  <button id="turnsBtn" class="fire-btn turns-fire-btn">
+    <span class="fire-ico">🔄</span>
+    <span id="turnsLbl">GENERATE TURNS</span>
+  </button>
+  </div>
+
+  <!-- ERROR -->
+  <div id="errBox" class="err-box" style="display:none"></div>
+
+  <!-- OUTPUT (standard) -->
+  <div id="outWrap" class="out-wrap" style="display:none">
+    <div class="out-hdr">
+      <span class="lbl">Enhanced Prompt</span>
+      <div class="out-acts">
+        <button id="copyBtn" class="act-btn" title="Copy">📋</button>
+        <button id="injectBtn" class="act-btn" title="Inject to AI tab">🚀</button>
+        <button id="clearBtn" class="act-btn" title="Clear">✕</button>
+      </div>
+    </div>
+    <div id="tagRow" class="tag-row"></div>
+    <div id="outBox" class="out-box"></div>
+    <div id="statsBar" class="stats-bar"></div>
+  </div>
+
+  <!-- OUTPUT (turns) -->
+  <div id="turnsOutWrap" style="display:none">
+    <div class="turns-out-hdr">
+      <span class="lbl" id="turnsOutTitle">8 Turns Generated</span>
+      <div class="out-acts">
+        <button id="turnsCopyAllBtn" class="act-btn" title="Copy all turns">📋 All</button>
+        <button id="turnsClearBtn" class="act-btn" title="Clear">✕</button>
+      </div>
+    </div>
+    <div id="turnsList" class="turns-list"></div>
+  </div>
+
+  <!-- HISTORY TOGGLE -->
+  <div class="hist-hdr" id="histHdr">
+    <span>📜 History</span><span id="histCount" class="badge">0</span>
+  </div>
+  <div id="histList" class="hist-list" style="display:none"></div>
+
+  <div class="footer">HailMary v3.0 — Autonomous Prompt Enhancer · Manus×Juma</div>
+</div>
+<script src="engine.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
